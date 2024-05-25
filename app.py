@@ -23,6 +23,7 @@ def home():
 @app.route('/update_parcel/<parcel_id>', methods=['PATCH'])
 def update_parcel(parcel_id):
     data = request.get_json()
+    print("Received data:", data)
 
     # Validate input
     if 'Status' not in data or not isinstance(data['Status'], str):
@@ -35,26 +36,31 @@ def update_parcel(parcel_id):
     if not parcel:
         return jsonify({"error": "Parcel not found"}), 404
 
-    current_distributor = parcel["Distributor"]
+    distributor = parcel["Distributor"]
+    print("Distributor:", distributor)
 
-    # Validate status
-    status_doc = statuses_collection.find_one({"Distributor": current_distributor, "Status": data["Status"]})
-    if not status_doc:
+    # Validate the status for the given distributor
+    valid_status = statuses_collection.find_one({"Distributor": distributor, "Status": data["Status"]})
+    print("Valid status found:", valid_status)
+    if not valid_status:
         return jsonify({"error": "Invalid status for the given distributor"}), 400
 
-    # Prepare fields to update
+    # Get the old Exelot Code and the new Exelot Code
+    old_exelot_code = parcel.get("Exelot Code", "")
+    new_exelot_code = valid_status["Exelot Code"]
+
+    # Update the parcel with the new status, comments, and Exelot Code
     update_fields = {
         "Status": data["Status"],
+        "Comments": data.get("Comments", ""),
+        "Exelot Code": new_exelot_code,
         "Status DT": datetime.now(pytz.utc)
     }
-    if "Comments" in data:
-        update_fields["Comments"] = data["Comments"]
-
-    # Update the parcel
     result = parcels_collection.update_one(
         {"ID": parcel_id},
         {"$set": update_fields}
     )
+
     if result.matched_count == 0:
         return jsonify({"error": "Parcel not found"}), 404
 
@@ -63,9 +69,9 @@ def update_parcel(parcel_id):
         "Parcel ID": parcel_id,
         "Old Status": parcel["Status"],
         "New Status": data["Status"],
-        "Old Exelot Code": parcel["Exelot Code"],
-        "New Exelot Code": status_doc["Exelot Code"],
-        "Change DT": datetime.now(pytz.utc)
+        "Old Exelot Code": old_exelot_code,
+        "New Exelot Code": new_exelot_code,
+        "Change DT": datetime.now(pytz.utc)  # Current UTC date and time
     }
     audits_collection.insert_one(audit_record)
 
