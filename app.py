@@ -35,44 +35,37 @@ def update_parcel(parcel_id):
     if not parcel:
         return jsonify({"error": "Parcel not found"}), 404
 
-    old_status = parcel.get("Status")
-    old_exelot_code = parcel.get("Exelot Code")
+    current_distributor = parcel["Distributor"]
 
-    # Fetch the Exelot Code based on the new Status and the Distributor
-    status_entry = statuses_collection.find_one({
-        "Distributor": parcel["Distributor"],
-        "Status": data["Status"]
-    })
-    if not status_entry:
+    # Validate status
+    status_doc = statuses_collection.find_one({"Distributor": current_distributor, "Status": data["Status"]})
+    if not status_doc:
         return jsonify({"error": "Invalid status for the given distributor"}), 400
 
-    new_exelot_code = status_entry["ExelotCode"]
-
-    # Update the parcel
+    # Prepare fields to update
     update_fields = {
         "Status": data["Status"],
-        "Exelot Code": new_exelot_code,
-        "Status DT": datetime.now(pytz.utc)  # Current UTC date and time
+        "Status DT": datetime.now(pytz.utc)
     }
-    if 'Comments' in data:
+    if "Comments" in data:
         update_fields["Comments"] = data["Comments"]
 
+    # Update the parcel
     result = parcels_collection.update_one(
         {"ID": parcel_id},
         {"$set": update_fields}
     )
-
     if result.matched_count == 0:
         return jsonify({"error": "Parcel not found"}), 404
 
     # Create an audit record
     audit_record = {
         "Parcel ID": parcel_id,
-        "Old Status": old_status,
+        "Old Status": parcel["Status"],
         "New Status": data["Status"],
-        "Old Exelot Code": old_exelot_code,
-        "New Exelot Code": new_exelot_code,
-        "Change DT": datetime.now(pytz.utc)  # Current UTC date and time
+        "Old Exelot Code": parcel["Exelot Code"],
+        "New Exelot Code": status_doc["Exelot Code"],
+        "Change DT": datetime.now(pytz.utc)
     }
     audits_collection.insert_one(audit_record)
 
