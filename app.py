@@ -15,6 +15,11 @@ statuses_collection = db['Statuses']
 audits_collection = db['Audits']
 
 
+@app.route('/')
+def home():
+    return "Hello, Flask is running!"
+
+
 @app.route('/update_parcel/<parcel_id>', methods=['PATCH'])
 def update_parcel(parcel_id):
     data = request.get_json()
