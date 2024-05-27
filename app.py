@@ -80,10 +80,13 @@ def update_parcel(parcel_id):
 
 @app.route('/get_parcels', methods=['GET'])
 def get_parcels():
-    parcels = list(parcels_collection.find({}))
-    for parcel in parcels:
-        parcel['_id'] = str(parcel['_id'])  # Convert ObjectId to string
-    return jsonify(parcels)
+    try:
+        parcels = list(parcels_collection.find({}))
+        for parcel in parcels:
+            parcel['_id'] = str(parcel['_id'])  # Convert ObjectId to string
+        return jsonify(parcels)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 if __name__ == '__main__':
