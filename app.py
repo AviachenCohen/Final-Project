@@ -91,6 +91,16 @@ def get_parcels():
         return jsonify({"error": str(e)}), 500
 
 
+@app.route('/get_valid_statuses/<distributor>', methods=['GET'])
+def get_valid_statuses(distributor):
+    try:
+        statuses = statuses_collection.find({"Distributor": distributor})
+        valid_statuses = [status["Status"] for status in statuses]
+        return jsonify(valid_statuses), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0')
 
