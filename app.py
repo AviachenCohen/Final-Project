@@ -101,6 +101,38 @@ def get_valid_statuses(distributor):
         return jsonify({"error": str(e)}), 500
 
 
+@app.route('/get_statuses', methods=['GET'])
+def get_statuses():
+    statuses = list(statuses_collection.find())
+    for status in statuses:
+        status['_id'] = str(status['_id'])
+    return jsonify(statuses), 200
+
+
+@app.route('/add_status', methods=['POST'])
+def add_status():
+    data = request.get_json()
+    result = statuses_collection.insert_one(data)
+    return jsonify({'inserted_id': str(result.inserted_id)}), 201
+
+
+@app.route('/update_status/<status_id>', methods=['PATCH'])
+def update_status(status_id):
+    data = request.get_json()
+    result = statuses_collection.update_one({'_id': status_id}, {'$set': data})
+    if result.matched_count == 0:
+        return jsonify({'error': 'Status not found'}), 404
+    return jsonify({'message': 'Status updated successfully'}), 200
+
+
+@app.route('/delete_status/<status_id>', methods=['DELETE'])
+def delete_status(status_id):
+    result = statuses_collection.delete_one({'_id': status_id})
+    if result.deleted_count == 0:
+        return jsonify({'error': 'Status not found'}), 404
+    return jsonify({'message': 'Status deleted successfully'}), 200
+
+
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0')
 
