@@ -1,4 +1,6 @@
 import os
+
+from bson import ObjectId
 from flask import Flask, request, jsonify
 from pymongo import MongoClient
 from datetime import datetime
@@ -119,7 +121,7 @@ def add_status():
 @app.route('/update_status/<status_id>', methods=['PATCH'])
 def update_status(status_id):
     data = request.get_json()
-    result = statuses_collection.update_one({'_id': status_id}, {'$set': data})
+    result = statuses_collection.update_one({'_id': ObjectId(status_id)}, {'$set': data})
     if result.matched_count == 0:
         return jsonify({'error': 'Status not found'}), 404
     return jsonify({'message': 'Status updated successfully'}), 200
@@ -127,7 +129,7 @@ def update_status(status_id):
 
 @app.route('/delete_status/<status_id>', methods=['DELETE'])
 def delete_status(status_id):
-    result = statuses_collection.delete_one({'_id': status_id})
+    result = statuses_collection.delete_one({'_id': ObjectId(status_id)})
     if result.deleted_count == 0:
         return jsonify({'error': 'Status not found'}), 404
     return jsonify({'message': 'Status deleted successfully'}), 200
