@@ -135,6 +135,17 @@ def delete_status(status_id):
     return jsonify({'message': 'Status deleted successfully'}), 200
 
 
+@app.route('/get_parcel_history/<parcel_id>', methods=['GET'])
+def get_parcel_history(parcel_id):
+    try:
+        history = list(audits_collection.find({"Parcel ID": parcel_id}))
+        for record in history:
+            record['_id'] = str(record['_id'])
+        return jsonify(history)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0')
 
