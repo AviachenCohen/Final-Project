@@ -148,25 +148,35 @@ def get_parcel_history(parcel_id):
 
 @app.route('/get_parcels_by_status_and_distributor', methods=['GET'])
 def get_parcels_by_status_and_distributor():
-    start_date = request.args.get('startDate')
-    end_date = request.args.get('endDate')
+    start_date_str = request.args.get('startDate')
+    end_date_str = request.args.get('endDate')
 
+    try:
+        # Parse the ISO string dates to datetime objects
+        start_date = datetime.fromisoformat(start_date_str.replace('Z', '+00:00'))
+        end_date = datetime.fromisoformat(end_date_str.replace('Z', '+00:00'))
+    except ValueError:
+        return jsonify({"error": "Invalid date format"}), 400
+
+    # Query MongoDB with the date range
     query = {
-        "Status DT": {
-            "$gte": datetime.strptime(start_date, '%Y-%m-%dT%H:%M:%S.%fZ'),
-            "$lte": datetime.strptime(end_date, '%Y-%m-%dT%H:%M:%S.%fZ')
-        }
+        "Status DT": {"$gte": start_date, "$lte": end_date}
     }
+    parcels = list(parcels_collection.find(query))
 
-    parcels = parcels_collection.find(query)
-    report_data = []
-
+    # Process the parcels to count by status and distributor
+    report = {}
     for parcel in parcels:
-        report_data.append({
-            "Status": parcel["Status"],
-            "Distributor": parcel["Distributor"],
-            "Count": 1  # You might need to aggregate counts based on your data structure
-        })
+        status = parcel.get('Status', 'Unknown')
+        distributor = parcel.get('Distributor', 'Unknown')
+        key = (status, distributor)
+        if key in report:
+            report[key] += 1
+        else:
+            report[key] = 1
+
+    # Format the report as a list of dictionaries
+    report_data = [{"Status": k[0], "Distributor": k[1], "Count": v} for k, v in report.items()]
 
     return jsonify(report_data)
 
