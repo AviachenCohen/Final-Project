@@ -146,6 +146,31 @@ def get_parcel_history(parcel_id):
         return jsonify({"error": str(e)}), 500
 
 
+@app.route('/get_parcels_by_status_and_distributor', methods=['GET'])
+def get_parcels_by_status_and_distributor():
+    start_date = request.args.get('startDate')
+    end_date = request.args.get('endDate')
+
+    query = {
+        "Status DT": {
+            "$gte": datetime.strptime(start_date, '%Y-%m-%dT%H:%M:%S.%fZ'),
+            "$lte": datetime.strptime(end_date, '%Y-%m-%dT%H:%M:%S.%fZ')
+        }
+    }
+
+    parcels = parcels_collection.find(query)
+    report_data = []
+
+    for parcel in parcels:
+        report_data.append({
+            "Status": parcel["Status"],
+            "Distributor": parcel["Distributor"],
+            "Count": 1  # You might need to aggregate counts based on your data structure
+        })
+
+    return jsonify(report_data)
+
+
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0')
 
