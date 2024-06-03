@@ -166,8 +166,7 @@ def get_parcels_by_status_and_distributor():
     parcels = list(parcels_collection.find(query))
 
     # Fetch all Exelot Codes
-    exelot_codes = {code['ExelotCode']: code['Description'] for code in exelot_codes_collection.find()}
-
+    exelot_codes = {code['Exelot Code']: code['Description'] for code in exelot_codes_collection.find()}
 
     # Process the parcels to count by status and distributor
     report = {}
@@ -188,7 +187,6 @@ def get_parcels_by_status_and_distributor():
         {"Status": k[0], "Distributor": k[1], "ExelotCodeDescription": k[2], "Count": v}
         for k, v in report.items()
     ]
-
 
     return jsonify(report_data)
 
