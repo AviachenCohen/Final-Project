@@ -15,6 +15,7 @@ db = client['logistics_DB']
 parcels_collection = db['Parcels']
 statuses_collection = db['Statuses']
 audits_collection = db['Audits']
+exelot_codes_collection = db['Exelot Codes']
 
 
 @app.route('/')
@@ -164,19 +165,30 @@ def get_parcels_by_status_and_distributor():
     }
     parcels = list(parcels_collection.find(query))
 
+    # Fetch all Exelot Codes
+    exelot_codes = {code['ExelotCode']: code['Description'] for code in exelot_codes_collection.find()}
+
+
     # Process the parcels to count by status and distributor
     report = {}
     for parcel in parcels:
         status = parcel.get('Status', 'Unknown')
         distributor = parcel.get('Distributor', 'Unknown')
-        key = (status, distributor)
+        exelot_code = parcel.get('Exelot Code', 'Unknown')
+        exelot_description = exelot_codes.get(exelot_code, 'No description')
+
+        key = (status, distributor, exelot_description)
         if key in report:
             report[key] += 1
         else:
             report[key] = 1
 
     # Format the report as a list of dictionaries
-    report_data = [{"Status": k[0], "Distributor": k[1], "Count": v} for k, v in report.items()]
+    report_data = [
+        {"Status": k[0], "Distributor": k[1], "ExelotCodeDescription": k[2], "Count": v}
+        for k, v in report.items()
+    ]
+
 
     return jsonify(report_data)
 
