@@ -151,6 +151,7 @@ def get_parcel_history(parcel_id):
 def get_parcels_by_status_and_distributor():
     start_date_str = request.args.get('startDate')
     end_date_str = request.args.get('endDate')
+    distributors = request.args.getlist('distributors')  # Get the list of distributors
 
     try:
         # Parse the ISO string dates to datetime objects
@@ -161,7 +162,9 @@ def get_parcels_by_status_and_distributor():
 
     # Query MongoDB with the date range
     query = {
-        "Status DT": {"$gte": start_date, "$lte": end_date}
+        "Status DT": {"$gte": start_date, "$lte": end_date},
+        "Distributor": {"$in": distributors} if distributors else {"$exists": True}
+        # Filter by distributors if provided
     }
     parcels = list(parcels_collection.find(query))
 
@@ -193,4 +196,3 @@ def get_parcels_by_status_and_distributor():
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0')
-
