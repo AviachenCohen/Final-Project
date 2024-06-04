@@ -163,9 +163,9 @@ def get_parcels_by_status_and_distributor():
     # Query MongoDB with the date range
     query = {
         "Status DT": {"$gte": start_date, "$lte": end_date},
-        "Distributor": {"$in": distributors} if distributors else {"$exists": True}
-        # Filter by distributors if provided
     }
+    if distributors and 'all' not in distributors:
+        query["Distributor"] = {"$in": distributors}  # Filter by distributors if provided
     parcels = list(parcels_collection.find(query))
 
     # Fetch all Exelot Codes
