@@ -34,6 +34,35 @@ def home():
     return "Hello, Flask is running!"
 
 
+@app.route('/get_parcels', methods=['GET'])
+@jwt_required()
+def get_parcels():
+    current_user = get_jwt_identity()
+    user_email = current_user['email']      # might not be needed - Check this
+    user_roles = current_user['roles']
+
+    query = {}
+
+    all_access_roles = ['Exelot VP', 'Admin', 'Exelot Workers']
+    distributor_roles = ['YDM', 'Cheetah', 'Kexpress', 'Done', 'HFD', 'Buzzr']
+
+    if not any(role in all_access_roles for role in user_roles):  # If user does not have a role with full access
+        distributor_role = next((role for role in user_roles if role in distributor_roles), None)
+        if distributor_role:
+            query['Distributor'] = distributor_role  # Filter by distributor role
+
+    # Fetch parcels based on current_user identity if needed
+    try:
+        print("get_parcels endpoint called")
+        parcels = list(parcels_collection.find(query))
+        for parcel in parcels:
+            parcel['_id'] = str(parcel['_id'])  # Convert ObjectId to string
+        return jsonify(parcels)
+    except Exception as e:
+        print(f"Error occurred: {str(e)}")
+        return jsonify({"error": str(e)}), 500
+
+
 @app.route('/update_parcel/<parcel_id>', methods=['PATCH'])
 def update_parcel(parcel_id):
     data = request.get_json()
@@ -90,35 +119,6 @@ def update_parcel(parcel_id):
     audits_collection.insert_one(audit_record)
 
     return jsonify({"message": "Parcel updated successfully"}), 200
-
-
-@app.route('/get_parcels', methods=['GET'])
-@jwt_required()
-def get_parcels():
-    current_user = get_jwt_identity()
-    user_email = current_user['email']      # might not be needed - Check this
-    user_roles = current_user['roles']
-
-    query = {}
-
-    all_access_roles = ['Exelot VP', 'Admin', 'Exelot Workers']
-    distributor_roles = ['YDM', 'Cheetah', 'Kexpress', 'Done', 'HFD', 'Buzzr']
-
-    if not any(role in all_access_roles for role in user_roles):  # If user does not have a role with full access
-        distributor_role = next((role for role in user_roles if role in distributor_roles), None)
-        if distributor_role:
-            query['Distributor'] = distributor_role  # Filter by distributor role
-
-    # Fetch parcels based on current_user identity if needed
-    try:
-        print("get_parcels endpoint called")
-        parcels = list(parcels_collection.find(query))
-        for parcel in parcels:
-            parcel['_id'] = str(parcel['_id'])  # Convert ObjectId to string
-        return jsonify(parcels)
-    except Exception as e:
-        print(f"Error occurred: {str(e)}")
-        return jsonify({"error": str(e)}), 500
 
 
 @app.route('/get_valid_statuses/<distributor>', methods=['GET'])
