@@ -230,12 +230,12 @@ def get_parcels_by_status_and_distributor():
 # Generate a token for testing purposes
 @app.route('/generate_token', methods=['POST'])
 def generate_token():
-    email = request.json.get('email')
+    sub = request.json.get('sub')
     roles = request.json.get('roles')
-    if not email or not roles:
+    if not sub or not roles:
         return jsonify({"msg": "Missing email or roles"}), 400
 
-    token = create_access_token(identity={"email": email, "roles": roles})
+    token = create_access_token(identity={"email": sub, "roles": roles})
     return jsonify(access_token=token)
 
 
