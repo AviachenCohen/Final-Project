@@ -1,12 +1,18 @@
 import os
 
+from dotenv import load_dotenv
 from bson import ObjectId
 from flask import Flask, request, jsonify
 from pymongo import MongoClient
 from datetime import datetime
 import pytz
+from flask_jwt_extended import JWTManager, jwt_required, get_jwt_identity
+
+
+load_dotenv()  # Load environment variables from .env file
 
 app = Flask(__name__)
+
 
 # Set up MongoDB connection
 mongo_uri = os.getenv('MONGO_URI')
@@ -16,6 +22,12 @@ parcels_collection = db['Parcels']
 statuses_collection = db['Statuses']
 audits_collection = db['Audits']
 exelot_codes_collection = db['Exelot Codes']
+
+# Load secret key from environment variable
+secret_key = os.getenv('FLASK_SECRET_KEY')
+app.config['JWT_SECRET_KEY'] = secret_key
+
+jwt = JWTManager(app)
 
 
 @app.route('/')
@@ -82,10 +94,26 @@ def update_parcel(parcel_id):
 
 
 @app.route('/get_parcels', methods=['GET'])
+@jwt_required()
 def get_parcels():
+    current_user = get_jwt_identity()
+    user_email = current_user['email']      # might not be needed - Check this
+    user_roles = current_user['roles']
+
+    query = {}
+
+    all_access_roles = ['Exelot VP', 'Owner', 'Exelot Workers']
+    distributor_roles = ['YDM', 'Cheetah', 'Kexpress', 'Done', 'HFD', 'Buzzr']
+
+    if not any(role in all_access_roles for role in user_roles):  # If user does not have a role with full access
+        distributor_role = next((role for role in user_roles if role in distributor_roles), None)
+        if distributor_role:
+            query['Distributor'] = distributor_role  # Filter by distributor role
+
+    # Fetch parcels based on current_user identity if needed
     try:
         print("get_parcels endpoint called")
-        parcels = list(parcels_collection.find({}))
+        parcels = list(parcels_collection.find(query))
         for parcel in parcels:
             parcel['_id'] = str(parcel['_id'])  # Convert ObjectId to string
         return jsonify(parcels)
