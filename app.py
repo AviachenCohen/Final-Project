@@ -6,7 +6,7 @@ from flask import Flask, request, jsonify
 from pymongo import MongoClient
 from datetime import datetime
 import pytz
-from flask_jwt_extended import JWTManager, jwt_required, get_jwt_identity
+from flask_jwt_extended import JWTManager, jwt_required, get_jwt_identity, create_access_token
 
 
 load_dotenv()  # Load environment variables from .env file
@@ -219,6 +219,18 @@ def get_parcels_by_status_and_distributor():
     ]
 
     return jsonify(report_data)
+
+
+# Generate a token for testing purposes
+@app.route('/generate_token', methods=['POST'])
+def generate_token():
+    email = request.json.get('email')
+    roles = request.json.get('roles')
+    if not email or not roles:
+        return jsonify({"msg": "Missing email or roles"}), 400
+
+    token = create_access_token(identity={"email": email, "roles": roles})
+    return jsonify(access_token=token)
 
 
 if __name__ == '__main__':
