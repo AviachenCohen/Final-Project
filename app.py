@@ -38,8 +38,8 @@ def get_parcels():
     current_user = get_jwt_identity()
     print(f"Current user: {current_user}")
 
-    user_email = current_user.get['email']  # Ensure 'sub' is used if it contains the email
-    user_roles = current_user.get['roles']
+    user_email = current_user['email']
+    user_roles = current_user['roles']
 
     if not user_email:
         raise ValueError("User email not found in token")
@@ -56,8 +56,7 @@ def get_parcels():
 
     try:
         print("get_parcels endpoint called")     # Fetch parcels based on current_user identity if needed
-        # parcels = list(parcels_collection.find(query))
-        parcels = [{'ID': '1', 'Distributor': 'YDM'}]  # Mock data for testing
+        parcels = list(parcels_collection.find(query))
         for parcel in parcels:
             parcel['_id'] = str(parcel['_id'])  # Convert ObjectId to string
         return jsonify(parcels)
