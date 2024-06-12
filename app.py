@@ -42,7 +42,7 @@ def get_parcels():
         user_email = current_user.get('sub')    # Ensure we're getting 'sub' claim
         user_roles = current_user.get('roles', [])
     else:
-        user_email = current_user
+        user_email = current_user.get('email')
         user_roles = []
 
     if not user_email:
