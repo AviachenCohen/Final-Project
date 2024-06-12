@@ -41,8 +41,11 @@ def get_parcels():
         current_user = get_jwt_identity()
         print(f"Current user: {current_user}")
 
-        user_email = current_user['email']  # Ensure 'sub' is used if it contains the email
-        user_roles = current_user['roles']
+        user_email = current_user.get('sub', None)  # Ensure 'sub' is used if it contains the email
+        user_roles = current_user.get('roles', [])
+
+        if not user_email:
+            raise ValueError("User email not found in token")
 
         query = {}
 
