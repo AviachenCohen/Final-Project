@@ -38,11 +38,15 @@ def get_parcels():
     current_user = get_jwt_identity()
     print(f"Current user: {current_user}")
 
-    user_email = current_user['email']
-    user_roles = current_user['roles']
+    if isinstance(current_user, dict):
+        user_email = current_user.get('email', None)
+        user_roles = current_user.get('roles', [])
+    else:
+        user_email = current_user
+        user_roles = []
 
     if not user_email:
-        raise ValueError("User email not found in token")
+        return jsonify({"error": "User email not found in token"}), 422
 
     query = {}
 
