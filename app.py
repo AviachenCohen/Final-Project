@@ -33,34 +33,10 @@ def home():
 
 
 @app.route('/get_parcels', methods=['GET'])
-@jwt_required()
 def get_parcels():
-    current_user = get_jwt_identity()
-    print(f"Current user: {current_user}")
-
-    if isinstance(current_user, dict):
-        user_email = current_user.get('sub')    # Ensure we're getting 'sub' claim
-        user_roles = current_user.get('roles', [])
-    else:
-        user_email = current_user.get('email')
-        user_roles = []
-
-    if not user_email:
-        return jsonify({"error": "User email not found in token"}), 422
-
-    query = {}
-
-    all_access_roles = ['Exelot VP', 'Admin', 'Exelot Workers']
-    distributor_roles = ['YDM', 'Cheetah', 'Kexpress', 'Done', 'HFD', 'Buzzr']
-
-    if not any(role in all_access_roles for role in user_roles):  # If user does not have a role with full access
-        distributor_role = next((role for role in user_roles if role in distributor_roles), None)
-        if distributor_role:
-            query['Distributor'] = distributor_role  # Filter by distributor role
-
     try:
-        print("get_parcels endpoint called")     # Fetch parcels based on current_user identity if needed
-        parcels = list(parcels_collection.find(query))
+        print("get_parcels endpoint called")
+        parcels = list(parcels_collection.find({}))
         for parcel in parcels:
             parcel['_id'] = str(parcel['_id'])  # Convert ObjectId to string
         return jsonify(parcels)
@@ -68,6 +44,43 @@ def get_parcels():
         print(f"Error occurred: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
+
+# @app.route('/get_parcels', methods=['GET'])
+# @jwt_required()
+# def get_parcels():
+#     current_user = get_jwt_identity()
+#     print(f"Current user: {current_user}")
+#
+#     if isinstance(current_user, dict):
+#         user_email = current_user.get('sub')    # Ensure we're getting 'sub' claim
+#         user_roles = current_user.get('roles', [])
+#     else:
+#         user_email = current_user.get('email')
+#         user_roles = []
+#
+#     if not user_email:
+#         return jsonify({"error": "User email not found in token"}), 422
+#
+#     query = {}
+#
+#     all_access_roles = ['Exelot VP', 'Admin', 'Exelot Workers']
+#     distributor_roles = ['YDM', 'Cheetah', 'Kexpress', 'Done', 'HFD', 'Buzzr']
+#
+#     if not any(role in all_access_roles for role in user_roles):  # If user does not have a role with full access
+#         distributor_role = next((role for role in user_roles if role in distributor_roles), None)
+#         if distributor_role:
+#             query['Distributor'] = distributor_role  # Filter by distributor role
+#
+#     try:
+#         print("get_parcels endpoint called")     # Fetch parcels based on current_user identity if needed
+#         parcels = list(parcels_collection.find(query))
+#         for parcel in parcels:
+#             parcel['_id'] = str(parcel['_id'])  # Convert ObjectId to string
+#         return jsonify(parcels)
+#     except Exception as e:
+#         print(f"Error occurred: {str(e)}")
+#         return jsonify({"error": str(e)}), 500
+#
 
 @app.route('/update_parcel/<parcel_id>', methods=['PATCH'])
 def update_parcel(parcel_id):
@@ -227,17 +240,17 @@ def get_parcels_by_status_and_distributor():
     return jsonify(report_data)
 
 
-# Generate a token for testing purposes
-@app.route('/generate_token', methods=['POST'])
-def generate_token():
-    sub = request.json.get('sub')
-    roles = request.json.get('roles')
-    if not sub or not roles:
-        return jsonify({"msg": "Missing email or roles"}), 400
-
-    token = create_access_token(identity={"email": sub, "roles": roles})
-    return jsonify(access_token=token)
-
+# # Generate a token for testing purposes
+# @app.route('/generate_token', methods=['POST'])
+# def generate_token():
+#     sub = request.json.get('sub')
+#     roles = request.json.get('roles')
+#     if not sub or not roles:
+#         return jsonify({"msg": "Missing email or roles"}), 400
+#
+#     token = create_access_token(identity={"email": sub, "roles": roles})
+#     return jsonify(access_token=token)
+#
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0')
