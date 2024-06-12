@@ -38,7 +38,6 @@ def home():
 @jwt_required()
 def get_parcels():
     current_user = get_jwt_identity()
-    user_email = current_user['email']      # might not be needed - Check this
     user_roles = current_user['roles']
 
     query = {}
@@ -224,12 +223,11 @@ def get_parcels_by_status_and_distributor():
 # Generate a token for testing purposes
 @app.route('/generate_token', methods=['POST'])
 def generate_token():
-    email = request.json.get('email')
     roles = request.json.get('roles')
-    if not email or not roles:
+    if not roles:
         return jsonify({"msg": "Missing email or roles"}), 400
 
-    token = create_access_token(identity={"email": email, "roles": roles})
+    token = create_access_token(identity={"roles": roles})
     return jsonify(access_token=token)
 
 
