@@ -102,7 +102,7 @@ def get_parcels():
 
     query = {}
 
-    all_access_roles = ['Exelot VP', 'Owner', 'Exelot Workers']
+    all_access_roles = ['Exelot VP', 'Admin', 'Exelot Workers']
     distributor_roles = ['YDM', 'Cheetah', 'Kexpress', 'Done', 'HFD', 'Buzzr']
 
     if not any(role in all_access_roles for role in user_roles):  # If user does not have a role with full access
