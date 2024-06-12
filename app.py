@@ -39,7 +39,7 @@ def get_parcels():
     print(f"Current user: {current_user}")
 
     if isinstance(current_user, dict):
-        user_email = current_user.get('email', None)
+        user_email = current_user.get('sub')    # Ensure we're getting 'sub' claim
         user_roles = current_user.get('roles', [])
     else:
         user_email = current_user
