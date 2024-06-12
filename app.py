@@ -24,8 +24,7 @@ audits_collection = db['Audits']
 exelot_codes_collection = db['Exelot Codes']
 
 # Load secret key from environment variable
-secret_key = os.getenv('FLASK_SECRET_KEY')
-app.config['JWT_SECRET_KEY'] = secret_key
+app.config['JWT_SECRET_KEY'] = os.getenv('FLASK_SECRET_KEY')
 
 jwt = JWTManager(app)
 
