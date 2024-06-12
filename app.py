@@ -37,27 +37,30 @@ def home():
 @app.route('/get_parcels', methods=['GET'])
 @jwt_required()
 def get_parcels():
-    current_user = get_jwt_identity()
-    user_id = current_user['sub']
-    user_roles = current_user['roles']
-
-    query = {}
-
-    all_access_roles = ['Exelot VP', 'Admin', 'Exelot Workers']
-    distributor_roles = ['YDM', 'Cheetah', 'Kexpress', 'Done', 'HFD', 'Buzzr']
-
-    if not any(role in all_access_roles for role in user_roles):  # If user does not have a role with full access
-        distributor_role = next((role for role in user_roles if role in distributor_roles), None)
-        if distributor_role:
-            query['Distributor'] = distributor_role  # Filter by distributor role
-
-    # Fetch parcels based on current_user identity if needed
     try:
+        current_user = get_jwt_identity()
+        print(f"Current user: {current_user}")
+
+        user_email = current_user['sub']  # Ensure 'sub' is used if it contains the email
+        user_roles = current_user['roles']
+
+        query = {}
+
+        all_access_roles = ['Exelot VP', 'Admin', 'Exelot Workers']
+        distributor_roles = ['YDM', 'Cheetah', 'Kexpress', 'Done', 'HFD', 'Buzzr']
+
+        if not any(role in all_access_roles for role in user_roles):  # If user does not have a role with full access
+            distributor_role = next((role for role in user_roles if role in distributor_roles), None)
+            if distributor_role:
+                query['Distributor'] = distributor_role  # Filter by distributor role
+
+        # Fetch parcels based on current_user identity if needed
         print("get_parcels endpoint called")
         parcels = list(parcels_collection.find(query))
         for parcel in parcels:
             parcel['_id'] = str(parcel['_id'])  # Convert ObjectId to string
         return jsonify(parcels)
+
     except Exception as e:
         print(f"Error occurred: {str(e)}")
         return jsonify({"error": str(e)}), 500
