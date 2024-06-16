@@ -1,5 +1,4 @@
 import os
-
 from dotenv import load_dotenv
 from bson import ObjectId
 from flask import Flask, request, jsonify
