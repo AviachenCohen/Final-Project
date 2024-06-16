@@ -1,4 +1,6 @@
 import os
+import io
+import csv
 from dotenv import load_dotenv
 from bson import ObjectId
 from flask import Flask, request, jsonify
@@ -247,6 +249,7 @@ def update_parcels_with_csv():
                 continue
         return jsonify({'message': 'CSV processed successfully'}), 200
     return jsonify({'error': 'File processing error'}), 500
+
 
 @app.route('/get_statuses', methods=['GET'])
 def get_statuses():
