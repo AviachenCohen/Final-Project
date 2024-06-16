@@ -201,51 +201,52 @@ def get_valid_statuses(distributor):
 
 @app.route('/update_parcels_with_csv', methods=['POST'])
 def update_parcels_with_csv():
-    data = request.get_json()
-    parcels = data.get('parcels', [])
+    if 'file' not in request.files:
+        return jsonify({'error': 'No file part'}), 400
 
-    if not parcels:
-        return jsonify({"error": "No parcels data provided"}), 400
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({'error': 'No selected file'}), 400
 
-    for parcel in parcels:
-        parcel_id = parcel.get('ID')
-        status = parcel.get('Status')
-        comments = parcel.get('Comments', '')
-
-        if not parcel_id or not status:
-            continue  # Skip records with missing mandatory fields
-
-        existing_parcel = parcels_collection.find_one({"ID": parcel_id})
-        if not existing_parcel:
-            continue  # Skip non-existent parcels
-
-        distributor = existing_parcel["Distributor"]
-        valid_status = statuses_collection.find_one({"Distributor": distributor, "Status": status})
-        if not valid_status:
-            continue  # Skip invalid statuses
-
-        new_exelot_code = valid_status["Exelot Code"]
-        update_fields = {
-            "Status": status,
-            "Comments": comments,
-            "Exelot Code": new_exelot_code,
-            "Status DT": datetime.now(pytz.utc)
-        }
-        parcels_collection.update_one({"ID": parcel_id}, {"$set": update_fields})
-
-        # Create an audit record
-        audit_record = {
-            "Parcel ID": parcel_id,
-            "Old Status": existing_parcel["Status"],
-            "New Status": status,
-            "Old Exelot Code": existing_parcel.get("Exelot Code", ""),
-            "New Exelot Code": new_exelot_code,
-            "Change DT": datetime.now(pytz.utc)  # Current UTC date and time
-        }
-        audits_collection.insert_one(audit_record)
-
-    return jsonify({"message": "Parcels updated successfully"}), 200
-
+    if file:
+        stream = io.StringIO(file.stream.read().decode("UTF8"), newline=None)
+        csv_input = csv.reader(stream)
+        headers = next(csv_input)  # Skip the header row
+        for row in csv_input:
+            try:
+                parcel_id, status, comments = row
+                # Find the relevant parcel
+                parcel = parcels_collection.find_one({"ID": parcel_id})
+                if parcel:
+                    distributor = parcel["Distributor"]
+                    valid_status = statuses_collection.find_one({"Distributor": distributor, "Status": status})
+                    if valid_status:
+                        new_exelot_code = valid_status["Exelot Code"]
+                        update_fields = {
+                            "Status": status,
+                            "Comments": comments,
+                            "Exelot Code": new_exelot_code,
+                            "Status DT": datetime.now(pytz.utc)
+                        }
+                        result = parcels_collection.update_one(
+                            {"ID": parcel_id},
+                            {"$set": update_fields}
+                        )
+                        if result.matched_count > 0:
+                            audit_record = {
+                                "Parcel ID": parcel_id,
+                                "Old Status": parcel["Status"],
+                                "New Status": status,
+                                "Old Exelot Code": parcel.get("Exelot Code", ""),
+                                "New Exelot Code": new_exelot_code,
+                                "Change DT": datetime.now(pytz.utc)
+                            }
+                            audits_collection.insert_one(audit_record)
+            except Exception as e:
+                print(f"Error processing row {row}: {str(e)}")
+                continue
+        return jsonify({'message': 'CSV processed successfully'}), 200
+    return jsonify({'error': 'File processing error'}), 500
 
 @app.route('/get_statuses', methods=['GET'])
 def get_statuses():
