@@ -209,8 +209,11 @@ def update_parcels_with_csv():
         data = request.get_json()
         print('got the data from request')
         base64_csv = data['file']
+        print('im holding base64_csv as a file now')
         csv_content = base64.b64decode(base64_csv).decode('utf-8')
+        print('i have csv content decoded')
         csv_reader = csv.DictReader(StringIO(csv_content))
+        print('i have csv reader')
 
         updated_parcels = 0
         for row in csv_reader:
