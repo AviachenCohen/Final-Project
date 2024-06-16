@@ -21,6 +21,8 @@ from flask_cors import CORS
 load_dotenv()  # Load environment variables from .env file
 
 app = Flask(__name__)
+CORS(app)
+
 
 # Set up MongoDB connection
 mongo_uri = os.getenv('MONGO_URI')
@@ -408,7 +410,6 @@ def get_parcels_by_status_and_distributor():
 
 
 if __name__ == '__main__':
-    CORS(app)
     app.run(debug=True, host='0.0.0.0')
 
 # @app.route('/get_parcels', methods=['GET'])
