@@ -205,6 +205,7 @@ def get_valid_statuses(distributor):
 @app.route('/update_parcels_with_csv', methods=['POST'])
 def update_parcels_with_csv():
     try:
+        print('starting to process csv file')
         data = request.get_json()
         base64_csv = data['file']
         csv_content = base64.b64decode(base64_csv).decode('utf-8')
