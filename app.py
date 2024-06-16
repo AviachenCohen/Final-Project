@@ -203,16 +203,12 @@ def get_valid_statuses(distributor):
 
 @app.route('/update_parcels_with_csv', methods=['POST'])
 def update_parcels_with_csv():
-    if 'file' not in request.files:
+    if not request.data:
         return jsonify({'error': 'No file part'}), 400
 
-    file = request.files['file']
-    if file.filename == '':
-        return jsonify({'error': 'No selected file'}), 400
-
-    if file:
-        stream = io.StringIO(file.stream.read().decode("UTF8"), newline=None)
-        csv_input = csv.reader(stream)
+    try:
+        csv_content = request.data.decode('utf-8')
+        csv_input = csv.reader(io.StringIO(csv_content))
         headers = next(csv_input)  # Skip the header row
         for row in csv_input:
             try:
@@ -248,7 +244,8 @@ def update_parcels_with_csv():
                 print(f"Error processing row {row}: {str(e)}")
                 continue
         return jsonify({'message': 'CSV processed successfully'}), 200
-    return jsonify({'error': 'File processing error'}), 500
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 
 @app.route('/get_statuses', methods=['GET'])
