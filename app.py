@@ -9,7 +9,8 @@ import pytz
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-from apscheduler.schedulers.blocking import BlockingScheduler
+from apscheduler.schedulers.background import BackgroundScheduler
+from apscheduler.triggers.cron import CronTrigger
 
 # from flask_jwt_extended import JWTManager, jwt_required, get_jwt_identity, create_access_token
 
@@ -102,8 +103,15 @@ def check_parcels_and_notify():
         print(f"Error in check_parcels_and_notify: {e}")
 
 
-scheduler = BlockingScheduler()
-scheduler.add_job(check_parcels_and_notify, 'cron', hour=9, minute=7, timezone='Asia/Jerusalem')
+# Set up the scheduler
+scheduler = BackgroundScheduler()
+scheduler.start()
+
+# Schedule the check_parcels_and_notify function to run daily at 8 AM Israel time
+scheduler.add_job(
+    check_parcels_and_notify,
+    trigger=CronTrigger(hour=9, minute=11, timezone='Asia/Jerusalem')
+)
 
 
 @app.route('/')
@@ -283,7 +291,6 @@ def get_parcels_by_status_and_distributor():
 
 
 if __name__ == '__main__':
-    scheduler.start()
     app.run(debug=True, host='0.0.0.0')
 
 # @app.route('/get_parcels', methods=['GET'])
