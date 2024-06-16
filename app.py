@@ -209,7 +209,8 @@ def update_parcels_with_csv():
         data = request.get_json()
         print('got the data from request')
         base64_csv = data['file']
-        print('im holding base64_csv as a file now')
+        print(f'Base64 CSV string: {base64_csv[:100]}...')  # Print the first 100 characters of the base64 string to ensure it's received correctly
+        # print('im holding base64_csv as a file now')
         csv_content = base64.b64decode(base64_csv).decode('utf-8')
         print('i have csv content decoded')
         print(f'Decoded CSV content:\n{csv_content}')  # Print the decoded CSV content to ensure it's correct
