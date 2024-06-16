@@ -1,5 +1,6 @@
+import base64
 import os
-import io
+from io import StringIO
 import csv
 from dotenv import load_dotenv
 from bson import ObjectId
@@ -204,48 +205,51 @@ def get_valid_statuses(distributor):
 @app.route('/update_parcels_with_csv', methods=['POST'])
 def update_parcels_with_csv():
     try:
-        csv_file = request.files['file']
-        csv_content = csv_file.read().decode('utf-8')
-        csv_reader = csv.DictReader(io.StringIO(csv_content))
+        data = request.get_json()
+        base64_csv = data['file']
+        csv_content = base64.b64decode(base64_csv).decode('utf-8')
+        csv_reader = csv.DictReader(StringIO(csv_content))
 
-        # Logging the field names for debugging
-        print("CSV Field Names:", csv_reader.fieldnames)
-
+        updated_parcels = 0
         for row in csv_reader:
-            print("Processing row:", row)  # Debugging print
+            parcel_id = row['ID']
+            new_status = row['Status']
+            new_comments = row['Comments']
 
-            # Ensure that each row is a dictionary
-            if isinstance(row, dict):
-                parcel_id = row.get('ID')
-                new_status = row.get('Status')
-                new_comments = row.get('Comments')
+            parcel = parcels_collection.find_one({"ID": parcel_id})
+            if not parcel:
+                continue
 
-                if not parcel_id or not new_status:
-                    print(f"Skipping row with missing required fields: {row}")
-                    continue  # Skip rows with missing required fields
+            distributor = parcel["Distributor"]
+            valid_status = statuses_collection.find_one({"Distributor": distributor, "Status": new_status})
+            if not valid_status:
+                continue
 
-                # Update the parcel in MongoDB
-                result = parcels_collection.update_one(
-                    {'ID': parcel_id},
-                    {'$set': {
-                        'Status': new_status,
-                        'Comments': new_comments,
-                        'Status DT': datetime.now(pytz.utc)
-                        }}
-                )
+            old_exelot_code = parcel.get("Exelot Code", "")
+            new_exelot_code = valid_status["Exelot Code"]
 
-                if result.matched_count == 0:
-                    print(f"No parcel found with ID: {parcel_id}")
-                else:
-                    print(f"Updated parcel with ID: {parcel_id}")
-            else:
-                print(f"Skipping invalid row (not a dictionary): {row}")
+            update_fields = {
+                "Status": new_status,
+                "Comments": new_comments,
+                "Exelot Code": new_exelot_code,
+                "Status DT": datetime.now(pytz.utc)
+            }
+            parcels_collection.update_one({"ID": parcel_id}, {"$set": update_fields})
 
-        return jsonify({"message": "CSV processed successfully"}), 200
+            audit_record = {
+                "Parcel ID": parcel_id,
+                "Old Status": parcel["Status"],
+                "New Status": new_status,
+                "Old Exelot Code": old_exelot_code,
+                "New Exelot Code": new_exelot_code,
+                "Change DT": datetime.now(pytz.utc)
+            }
+            audits_collection.insert_one(audit_record)
+            updated_parcels += 1
+
+        return jsonify({"message": "Parcels updated successfully", "updated_parcels": updated_parcels}), 200
     except Exception as e:
-        print(f"Error processing CSV: {str(e)}")
         return jsonify({"error": str(e)}), 500
-
 
 # @app.route('/update_parcels_with_csv', methods=['POST'])
 # def update_parcels_with_csv():
