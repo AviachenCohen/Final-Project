@@ -13,6 +13,8 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
+from flask_cors import CORS
+
 
 # from flask_jwt_extended import JWTManager, jwt_required, get_jwt_identity, create_access_token
 
@@ -406,6 +408,7 @@ def get_parcels_by_status_and_distributor():
 
 
 if __name__ == '__main__':
+    CORS(app)
     app.run(debug=True, host='0.0.0.0')
 
 # @app.route('/get_parcels', methods=['GET'])
