@@ -208,7 +208,7 @@ def update_parcels_with_csv():
         print('starting to process csv file')
         data = request.get_json()
         print(f'got the data from request: {data}')  # Print the entire data to check its structure
-        csv_content = data.get('file', '')
+        csv_content = data.get('csvContent', '')
         if not csv_content:
             raise ValueError("No CSV file data found in the request")
         print(f'Decoded CSV content:\n{csv_content}')  # Print the decoded CSV content to ensure it's correct
@@ -266,7 +266,7 @@ def update_parcels_with_csv():
         return jsonify({"message": "Parcels updated successfully", "updated_parcels": updated_parcels}), 200
     except Exception as e:
         print(f"Error processing CSV: {str(e)}")
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": str(e)}), 400
 
 
 # @app.route('/update_parcels_with_csv', methods=['POST'])
