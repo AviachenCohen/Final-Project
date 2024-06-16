@@ -212,6 +212,7 @@ def update_parcels_with_csv():
         print('im holding base64_csv as a file now')
         csv_content = base64.b64decode(base64_csv).decode('utf-8')
         print('i have csv content decoded')
+        print(f'Decoded CSV content:\n{csv_content}')  # Print the decoded CSV content to ensure it's correct
         csv_reader = csv.DictReader(StringIO(csv_content))
         print('i have csv reader')
 
