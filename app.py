@@ -216,6 +216,8 @@ def update_parcels_with_csv():
             new_status = row['Status']
             new_comments = row['Comments']
 
+            print(f"Processing parcel with ID: {parcel_id}")
+
             parcel = parcels_collection.find_one({"ID": parcel_id})
             if not parcel:
                 print(f"Parcel with ID {parcel_id} not found.")
@@ -248,6 +250,8 @@ def update_parcels_with_csv():
             }
             audits_collection.insert_one(audit_record)
             updated_parcels += 1
+
+            print(f"Updated parcel with ID: {parcel_id}")
 
         print(f"Updated {updated_parcels} parcels.")
         return jsonify({"message": "Parcels updated successfully", "updated_parcels": updated_parcels}), 200
