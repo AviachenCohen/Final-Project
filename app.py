@@ -207,6 +207,7 @@ def update_parcels_with_csv():
     try:
         print('starting to process csv file')
         data = request.get_json()
+        print('got the data from request')
         base64_csv = data['file']
         csv_content = base64.b64decode(base64_csv).decode('utf-8')
         csv_reader = csv.DictReader(StringIO(csv_content))
