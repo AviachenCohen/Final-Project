@@ -203,49 +203,94 @@ def get_valid_statuses(distributor):
 
 @app.route('/update_parcels_with_csv', methods=['POST'])
 def update_parcels_with_csv():
-    if not request.data:
-        return jsonify({'error': 'No file part'}), 400
-
     try:
-        csv_content = request.data.decode('utf-8')
-        csv_input = csv.reader(io.StringIO(csv_content))
-        headers = next(csv_input)  # Skip the header row
-        for row in csv_input:
-            try:
-                parcel_id, status, comments = row
-                # Find the relevant parcel
-                parcel = parcels_collection.find_one({"ID": parcel_id})
-                if parcel:
-                    distributor = parcel["Distributor"]
-                    valid_status = statuses_collection.find_one({"Distributor": distributor, "Status": status})
-                    if valid_status:
-                        new_exelot_code = valid_status["Exelot Code"]
-                        update_fields = {
-                            "Status": status,
-                            "Comments": comments,
-                            "Exelot Code": new_exelot_code,
-                            "Status DT": datetime.now(pytz.utc)
-                        }
-                        result = parcels_collection.update_one(
-                            {"ID": parcel_id},
-                            {"$set": update_fields}
-                        )
-                        if result.matched_count > 0:
-                            audit_record = {
-                                "Parcel ID": parcel_id,
-                                "Old Status": parcel["Status"],
-                                "New Status": status,
-                                "Old Exelot Code": parcel.get("Exelot Code", ""),
-                                "New Exelot Code": new_exelot_code,
-                                "Change DT": datetime.now(pytz.utc)
-                            }
-                            audits_collection.insert_one(audit_record)
-            except Exception as e:
-                print(f"Error processing row {row}: {str(e)}")
-                continue
-        return jsonify({'message': 'CSV processed successfully'}), 200
+        csv_file = request.files['file']
+        csv_content = csv_file.read().decode('utf-8')
+        csv_reader = csv.DictReader(io.StringIO(csv_content))
+
+        # Logging the field names for debugging
+        print("CSV Field Names:", csv_reader.fieldnames)
+
+        for row in csv_reader:
+            print("Processing row:", row)  # Debugging print
+
+            # Ensure that each row is a dictionary
+            if isinstance(row, dict):
+                parcel_id = row.get('ID')
+                new_status = row.get('Status')
+                new_comments = row.get('Comments')
+
+                if not parcel_id or not new_status:
+                    print(f"Skipping row with missing required fields: {row}")
+                    continue  # Skip rows with missing required fields
+
+                # Update the parcel in MongoDB
+                result = parcels_collection.update_one(
+                    {'ID': parcel_id},
+                    {'$set': {
+                        'Status': new_status,
+                        'Comments': new_comments,
+                        'Status DT': datetime.now(pytz.utc)
+                        }}
+                )
+
+                if result.matched_count == 0:
+                    print(f"No parcel found with ID: {parcel_id}")
+                else:
+                    print(f"Updated parcel with ID: {parcel_id}")
+            else:
+                print(f"Skipping invalid row (not a dictionary): {row}")
+
+        return jsonify({"message": "CSV processed successfully"}), 200
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        print(f"Error processing CSV: {str(e)}")
+        return jsonify({"error": str(e)}), 500
+
+
+# @app.route('/update_parcels_with_csv', methods=['POST'])
+# def update_parcels_with_csv():
+#     if not request.data:
+#         return jsonify({'error': 'No file part'}), 400
+#
+#     try:
+#         csv_file = request.data.decode('utf-8')  # Read the CSV content from the request
+#         csv_reader = csv.DictReader(csv_file.splitlines())
+#         for row in csv_reader:
+#             try:
+#                 parcel_id, status, comments = row
+#                 # Find the relevant parcel
+#                 parcel = parcels_collection.find_one({"ID": parcel_id})
+#                 if parcel:
+#                     distributor = parcel["Distributor"]
+#                     valid_status = statuses_collection.find_one({"Distributor": distributor, "Status": status})
+#                     if valid_status:
+#                         new_exelot_code = valid_status["Exelot Code"]
+#                         update_fields = {
+#                             "Status": status,
+#                             "Comments": comments,
+#                             "Exelot Code": new_exelot_code,
+#                             "Status DT": datetime.now(pytz.utc)
+#                         }
+#                         result = parcels_collection.update_one(
+#                             {"ID": parcel_id},
+#                             {"$set": update_fields}
+#                         )
+#                         if result.matched_count > 0:
+#                             audit_record = {
+#                                 "Parcel ID": parcel_id,
+#                                 "Old Status": parcel["Status"],
+#                                 "New Status": status,
+#                                 "Old Exelot Code": parcel.get("Exelot Code", ""),
+#                                 "New Exelot Code": new_exelot_code,
+#                                 "Change DT": datetime.now(pytz.utc)
+#                             }
+#                             audits_collection.insert_one(audit_record)
+#             except Exception as e:
+#                 print(f"Error processing row {row}: {str(e)}")
+#                 continue
+#         return jsonify({'message': 'CSV processed successfully'}), 200
+#     except Exception as e:
+#         return jsonify({'error': str(e)}), 500
 
 
 @app.route('/get_statuses', methods=['GET'])
