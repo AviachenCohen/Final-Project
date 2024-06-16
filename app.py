@@ -200,6 +200,54 @@ def get_valid_statuses(distributor):
         return jsonify({"error": str(e)}), 500
 
 
+@app.route('/update_parcels_with_csv', methods=['POST'])
+def update_parcels_with_csv():
+    data = request.get_json()
+    parcels = data.get('parcels', [])
+
+    if not parcels:
+        return jsonify({"error": "No parcels data provided"}), 400
+
+    for parcel in parcels:
+        parcel_id = parcel.get('ID')
+        status = parcel.get('Status')
+        comments = parcel.get('Comments', '')
+
+        if not parcel_id or not status:
+            continue  # Skip records with missing mandatory fields
+
+        existing_parcel = parcels_collection.find_one({"ID": parcel_id})
+        if not existing_parcel:
+            continue  # Skip non-existent parcels
+
+        distributor = existing_parcel["Distributor"]
+        valid_status = statuses_collection.find_one({"Distributor": distributor, "Status": status})
+        if not valid_status:
+            continue  # Skip invalid statuses
+
+        new_exelot_code = valid_status["Exelot Code"]
+        update_fields = {
+            "Status": status,
+            "Comments": comments,
+            "Exelot Code": new_exelot_code,
+            "Status DT": datetime.now(pytz.utc)
+        }
+        parcels_collection.update_one({"ID": parcel_id}, {"$set": update_fields})
+
+        # Create an audit record
+        audit_record = {
+            "Parcel ID": parcel_id,
+            "Old Status": existing_parcel["Status"],
+            "New Status": status,
+            "Old Exelot Code": existing_parcel.get("Exelot Code", ""),
+            "New Exelot Code": new_exelot_code,
+            "Change DT": datetime.now(pytz.utc)  # Current UTC date and time
+        }
+        audits_collection.insert_one(audit_record)
+
+    return jsonify({"message": "Parcels updated successfully"}), 200
+
+
 @app.route('/get_statuses', methods=['GET'])
 def get_statuses():
     statuses = list(statuses_collection.find())
