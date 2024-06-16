@@ -218,11 +218,13 @@ def update_parcels_with_csv():
 
             parcel = parcels_collection.find_one({"ID": parcel_id})
             if not parcel:
+                print(f"Parcel with ID {parcel_id} not found.")
                 continue
 
             distributor = parcel["Distributor"]
             valid_status = statuses_collection.find_one({"Distributor": distributor, "Status": new_status})
             if not valid_status:
+                print(f"Invalid status {new_status} for distributor {distributor}.")
                 continue
 
             old_exelot_code = parcel.get("Exelot Code", "")
@@ -247,8 +249,10 @@ def update_parcels_with_csv():
             audits_collection.insert_one(audit_record)
             updated_parcels += 1
 
+        print(f"Updated {updated_parcels} parcels.")
         return jsonify({"message": "Parcels updated successfully", "updated_parcels": updated_parcels}), 200
     except Exception as e:
+        print(f"Error processing CSV: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
 # @app.route('/update_parcels_with_csv', methods=['POST'])
