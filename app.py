@@ -207,13 +207,17 @@ def update_parcels_with_csv():
     try:
         print('starting to process csv file')
         data = request.get_json()
-        print('got the data from request')
-        base64_csv = data['file']
-        print(f'Base64 CSV string: {base64_csv[:100]}...')  # Print the first 100 characters of the base64 string to ensure it's received correctly
-        # print('im holding base64_csv as a file now')
+        print(f'got the data from request: {data}')  # Print the entire data to check its structure
+        base64_csv = data.get('file', '')
+        if not base64_csv:
+            raise ValueError("No CSV file data found in the request")
+        print(
+            f'Base64 CSV string: {base64_csv[:100]}...')
+        # Print the first 100 characters of the base64 string to ensure it's received correctly
+
         csv_content = base64.b64decode(base64_csv).decode('utf-8')
-        print('i have csv content decoded')
         print(f'Decoded CSV content:\n{csv_content}')  # Print the decoded CSV content to ensure it's correct
+
         csv_reader = csv.DictReader(StringIO(csv_content))
         print('i have csv reader')
 
@@ -268,6 +272,7 @@ def update_parcels_with_csv():
     except Exception as e:
         print(f"Error processing CSV: {str(e)}")
         return jsonify({"error": str(e)}), 500
+
 
 # @app.route('/update_parcels_with_csv', methods=['POST'])
 # def update_parcels_with_csv():
