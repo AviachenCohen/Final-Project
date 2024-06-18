@@ -409,6 +409,31 @@ def get_parcels_by_status_and_distributor():
     return jsonify(report_data)
 
 
+@app.route('/get_lost_parcels', methods=['GET'])
+def get_lost_parcels():
+    distributors = request.args.get('distributors', type=str, default=None)
+    sites = request.args.get('sites', type=str, default=None)
+    status = '73'  # Status code for lost parcels
+
+    query = {'Status': status}
+    if distributors:
+        query['Distributor'] = {'$in': distributors.split(',')}
+    if sites:
+        query['Site'] = {'$in': sites.split(',')}
+
+    pipeline = [
+        {'$match': query},
+        {'$group': {
+            '_id': {'Distributor': '$Distributor', 'Site': '$Site'},
+            'TotalLost': {'$sum': 1}
+        }},
+        {'$sort': {'_id': 1}}
+    ]
+
+    results = list(db.parcels.aggregate(pipeline))
+    return jsonify(results)
+
+
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0')
 
