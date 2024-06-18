@@ -15,14 +15,12 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
 from flask_cors import CORS
 
-
 # from flask_jwt_extended import JWTManager, jwt_required, get_jwt_identity, create_access_token
 
 load_dotenv()  # Load environment variables from .env file
 
 app = Flask(__name__)
 CORS(app)
-
 
 # Set up MongoDB connection
 mongo_uri = os.getenv('MONGO_URI')
@@ -411,27 +409,51 @@ def get_parcels_by_status_and_distributor():
 
 @app.route('/get_lost_parcels', methods=['GET'])
 def get_lost_parcels():
-    distributors = request.args.get('distributors', type=str, default=None)
-    sites = request.args.get('sites', type=str, default=None)
+    start_date_str = request.args.get('startDate')
+    end_date_str = request.args.get('endDate')
+    distributors = request.args.getlist('distributors')  # Get the list of distributors
+    sites = request.args.getlist('sites')  # Get the list of sites
     status = '73'  # Status code for lost parcels
 
-    query = {'Status': status}
-    if distributors:
-        query['Distributor'] = {'$in': distributors.split(',')}
-    if sites:
-        query['Site'] = {'$in': sites.split(',')}
+    try:
+        # Parse the ISO string dates to datetime objects
+        start_date = datetime.fromisoformat(start_date_str.replace('Z', '+00:00'))
+        end_date = datetime.fromisoformat(end_date_str.replace('Z', '+00:00'))
+    except ValueError:
+        return jsonify({"error": "Invalid date format"}), 400
 
-    pipeline = [
-        {'$match': query},
-        {'$group': {
-            '_id': {'Distributor': '$Distributor', 'Site': '$Site'},
-            'TotalLost': {'$sum': 1}
-        }},
-        {'$sort': {'_id': 1}}
+    # Query MongoDB with the date range
+    lost_parcels_query = {
+        'Status': status,
+        "Status DT": {"$gte": start_date, "$lte": end_date},
+    }
+
+    # Build the query filter
+    if distributors and 'all' not in distributors:
+        lost_parcels_query["Distributor"] = {"$in": distributors}  # Filter by distributors if provided
+    if sites:
+        lost_parcels_query['Site'] = {'$in': sites}
+    parcels = list(parcels_collection.find(lost_parcels_query))
+
+    # Process the parcels to count by status and distributor
+    report = {}
+    for parcel in parcels:
+        distributor = parcel.get('Distributor', 'Unknown')
+        site = parcel.get('Site', 'Unknown')
+
+        key = (distributor, site)
+        if key in report:
+            report[key] += 1
+        else:
+            report[key] = 1
+
+    # Format the report as a list of dictionaries
+    report_data = [
+        {"Distributor": k[0], "Site": k[1], "Total Lost": v}
+        for k, v in report.items()
     ]
 
-    results = list(db.parcels.aggregate(pipeline))
-    return jsonify(results)
+    return jsonify(report_data)
 
 
 if __name__ == '__main__':
