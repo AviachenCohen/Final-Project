@@ -398,7 +398,7 @@ def get_lost_parcels():
     # Build the query filter
     if distributors and 'all' not in distributors:
         lost_parcels_query["Distributor"] = {"$in": distributors}  # Filter by distributors if provided
-    if sites:
+    if sites and 'all' not in sites:
         lost_parcels_query['Site'] = {'$in': sites}
 
     print(f"MongoDB query: {lost_parcels_query}")
