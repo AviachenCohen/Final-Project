@@ -377,7 +377,7 @@ def get_lost_parcels():
     end_date_str = request.args.get('endDate')
     distributors = request.args.getlist('distributors')  # Get the list of distributors
     sites = request.args.getlist('sites')  # Get the list of sites
-    status = '73'  # Status code for lost parcels
+    status = request.args.get('status')  # Status code for lost parcels
 
     try:
         # Parse the ISO string dates to datetime objects
