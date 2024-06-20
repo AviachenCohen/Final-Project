@@ -378,6 +378,9 @@ def get_lost_parcels():
     distributors = request.args.getlist('distributors')  # Get the list of distributors
     sites = request.args.getlist('sites')  # Get the list of sites
     status = request.args.get('status')  # Status code for lost parcels
+    print(
+        f"Received start date: {start_date_str}, end date: {end_date_str}, distributors: {distributors},"
+        f" sites: {sites}, status: {status}")
 
     try:
         # Parse the ISO string dates to datetime objects
@@ -397,7 +400,11 @@ def get_lost_parcels():
         lost_parcels_query["Distributor"] = {"$in": distributors}  # Filter by distributors if provided
     if sites:
         lost_parcels_query['Site'] = {'$in': sites}
+
+    print(f"MongoDB query: {lost_parcels_query}")
+
     parcels = list(parcels_collection.find(lost_parcels_query))
+    print(f"Found parcels: {parcels}")
 
     # Process the parcels to count by status and distributor
     report = {}
@@ -416,14 +423,13 @@ def get_lost_parcels():
         {"Distributor": k[0], "Site": k[1], "Total Lost": v}
         for k, v in report.items()
     ]
-    print(report_data)
+    print(f"Generated report data: {report_data}")
 
     return jsonify(report_data)
 
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0')
-
 
 # @app.route('/get_parcels', methods=['GET'])
 # @jwt_required()
@@ -472,7 +478,6 @@ if __name__ == '__main__':
 #
 #     token = create_access_token(identity={"email": sub, "roles": roles})
 #     return jsonify(access_token=token)
-
 
 
 # @app.route('/update_parcels_with_csv', methods=['POST'])
