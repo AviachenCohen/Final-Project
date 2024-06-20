@@ -271,55 +271,9 @@ def update_parcels_with_csv():
         return jsonify({"error": str(e)}), 400
 
 
-# @app.route('/update_parcels_with_csv', methods=['POST'])
-# def update_parcels_with_csv():
-#     if not request.data:
-#         return jsonify({'error': 'No file part'}), 400
-#
-#     try:
-#         csv_file = request.data.decode('utf-8')  # Read the CSV content from the request
-#         csv_reader = csv.DictReader(csv_file.splitlines())
-#         for row in csv_reader:
-#             try:
-#                 parcel_id, status, comments = row
-#                 # Find the relevant parcel
-#                 parcel = parcels_collection.find_one({"ID": parcel_id})
-#                 if parcel:
-#                     distributor = parcel["Distributor"]
-#                     valid_status = statuses_collection.find_one({"Distributor": distributor, "Status": status})
-#                     if valid_status:
-#                         new_exelot_code = valid_status["Exelot Code"]
-#                         update_fields = {
-#                             "Status": status,
-#                             "Comments": comments,
-#                             "Exelot Code": new_exelot_code,
-#                             "Status DT": datetime.now(pytz.utc)
-#                         }
-#                         result = parcels_collection.update_one(
-#                             {"ID": parcel_id},
-#                             {"$set": update_fields}
-#                         )
-#                         if result.matched_count > 0:
-#                             audit_record = {
-#                                 "Parcel ID": parcel_id,
-#                                 "Old Status": parcel["Status"],
-#                                 "New Status": status,
-#                                 "Old Exelot Code": parcel.get("Exelot Code", ""),
-#                                 "New Exelot Code": new_exelot_code,
-#                                 "Change DT": datetime.now(pytz.utc)
-#                             }
-#                             audits_collection.insert_one(audit_record)
-#             except Exception as e:
-#                 print(f"Error processing row {row}: {str(e)}")
-#                 continue
-#         return jsonify({'message': 'CSV processed successfully'}), 200
-#     except Exception as e:
-#         return jsonify({'error': str(e)}), 500
-
-
 @app.route('/get_statuses', methods=['GET'])
 def get_statuses():
-    statuses = list(statuses_collection.find())
+    statuses = list(statuses_collection.find({'Active': True}))  # Only fetch active statuses
     for status in statuses:
         status['_id'] = str(status['_id'])
     return jsonify(statuses), 200
@@ -341,12 +295,19 @@ def update_status(status_id):
     return jsonify({'message': 'Status updated successfully'}), 200
 
 
-@app.route('/delete_status/<status_id>', methods=['DELETE'])
-def delete_status(status_id):
-    result = statuses_collection.delete_one({'_id': ObjectId(status_id)})
-    if result.deleted_count == 0:
-        return jsonify({'error': 'Status not found'}), 404
-    return jsonify({'message': 'Status deleted successfully'}), 200
+@app.route('/deactivate_status/<status_id>', methods=['PATCH'])
+def deactivate_status(status_id):
+    try:
+        # Set the Active field to false
+        result = statuses_collection.update_one(
+            {'_id': ObjectId(status_id)},
+            {'$set': {'Active': False}}
+        )
+        if result.matched_count == 0:
+            return jsonify({'error': 'Status not found'}), 404
+        return jsonify({'message': 'Status deactivated successfully'}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 
 @app.route('/get_parcel_history/<parcel_id>', methods=['GET'])
@@ -459,6 +420,7 @@ def get_lost_parcels():
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0')
 
+
 # @app.route('/get_parcels', methods=['GET'])
 # @jwt_required()
 # def get_parcels():
@@ -506,3 +468,50 @@ if __name__ == '__main__':
 #
 #     token = create_access_token(identity={"email": sub, "roles": roles})
 #     return jsonify(access_token=token)
+
+
+
+# @app.route('/update_parcels_with_csv', methods=['POST'])
+# def update_parcels_with_csv():
+#     if not request.data:
+#         return jsonify({'error': 'No file part'}), 400
+#
+#     try:
+#         csv_file = request.data.decode('utf-8')  # Read the CSV content from the request
+#         csv_reader = csv.DictReader(csv_file.splitlines())
+#         for row in csv_reader:
+#             try:
+#                 parcel_id, status, comments = row
+#                 # Find the relevant parcel
+#                 parcel = parcels_collection.find_one({"ID": parcel_id})
+#                 if parcel:
+#                     distributor = parcel["Distributor"]
+#                     valid_status = statuses_collection.find_one({"Distributor": distributor, "Status": status})
+#                     if valid_status:
+#                         new_exelot_code = valid_status["Exelot Code"]
+#                         update_fields = {
+#                             "Status": status,
+#                             "Comments": comments,
+#                             "Exelot Code": new_exelot_code,
+#                             "Status DT": datetime.now(pytz.utc)
+#                         }
+#                         result = parcels_collection.update_one(
+#                             {"ID": parcel_id},
+#                             {"$set": update_fields}
+#                         )
+#                         if result.matched_count > 0:
+#                             audit_record = {
+#                                 "Parcel ID": parcel_id,
+#                                 "Old Status": parcel["Status"],
+#                                 "New Status": status,
+#                                 "Old Exelot Code": parcel.get("Exelot Code", ""),
+#                                 "New Exelot Code": new_exelot_code,
+#                                 "Change DT": datetime.now(pytz.utc)
+#                             }
+#                             audits_collection.insert_one(audit_record)
+#             except Exception as e:
+#                 print(f"Error processing row {row}: {str(e)}")
+#                 continue
+#         return jsonify({'message': 'CSV processed successfully'}), 200
+#     except Exception as e:
+#         return jsonify({'error': str(e)}), 500
