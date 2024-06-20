@@ -416,6 +416,7 @@ def get_lost_parcels():
         {"Distributor": k[0], "Site": k[1], "Total Lost": v}
         for k, v in report.items()
     ]
+    print(report_data)
 
     return jsonify(report_data)
 
