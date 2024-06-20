@@ -420,7 +420,7 @@ def get_lost_parcels():
 
     # Format the report as a list of dictionaries
     report_data = [
-        {"Distributor": k[0], "Site": k[1], "Total Lost": v}
+        {"Distributor": k[0], "Site": k[1], "TotalLost": v}
         for k, v in report.items()
     ]
     print(f"Generated report data: {report_data}")
