@@ -428,6 +428,63 @@ def get_lost_parcels():
     return jsonify(report_data)
 
 
+@app.route('/get_held_parcels', methods=['GET'])
+def get_held_parcels():
+    start_date_str = request.args.get('startDate')
+    end_date_str = request.args.get('endDate')
+    distributors = request.args.getlist('distributors')  # Get the list of distributors
+    sites = request.args.getlist('sites')  # Get the list of sites
+    exelot_codes = request.args.getlist('exelotCode')  # Get the list of exelot codes for held parcels
+    print(
+        f"Received start date: {start_date_str}, end date: {end_date_str}, distributors: {distributors},"
+        f" sites: {sites}, exelot codes: {exelot_codes}")
+
+    try:
+        # Parse the ISO string dates to datetime objects
+        start_date = datetime.fromisoformat(start_date_str.replace('Z', '+00:00'))
+        end_date = datetime.fromisoformat(end_date_str.replace('Z', '+00:00'))
+    except ValueError:
+        return jsonify({"error": "Invalid date format"}), 400
+
+    # Query MongoDB with the date range
+    held_parcels_query = {
+        "Exelot Code": {"$in": exelot_codes},
+        "Status DT": {"$gte": start_date, "$lte": end_date},
+    }
+
+    # Build the query filter
+    if distributors and 'all' not in distributors:
+        held_parcels_query["Distributor"] = {"$in": distributors}  # Filter by distributors if provided
+    if sites and 'all' not in sites:
+        held_parcels_query['Site'] = {'$in': sites}
+
+    print(f"MongoDB query: {held_parcels_query}")
+
+    parcels = list(parcels_collection.find(held_parcels_query))
+    print(f"Found parcels: {parcels}")
+
+    # Process the parcels to count by exelot code and distributor
+    report = {}
+    for parcel in parcels:
+        distributor = parcel.get('Distributor', 'Unknown')
+        site = parcel.get('Site', 'Unknown')
+
+        key = (distributor, site)
+        if key in report:
+            report[key] += 1
+        else:
+            report[key] = 1
+
+    # Format the report as a list of dictionaries
+    report_data = [
+        {"Distributor": k[0], "Site": k[1], "TotalHeld": v}
+        for k, v in report.items()
+    ]
+    print(f"Generated report data: {report_data}")
+
+    return jsonify(report_data)
+
+
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0')
 
