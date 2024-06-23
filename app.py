@@ -505,6 +505,7 @@ def get_parcels_for_pudo_report():
 
     # Calculate the threshold date for parcels older than 7 days
     seven_days_ago = datetime.now(timezone.utc) - timedelta(days=7)
+    seven_days_ago_naive = seven_days_ago.replace(tzinfo=None)  # Convert to naive datetime
 
     # Query MongoDB with the date range and the 7-day threshold
     parcels_for_pudo_report_query = {
@@ -520,11 +521,24 @@ def get_parcels_for_pudo_report():
 
     print(f"MongoDB query: {parcels_for_pudo_report_query}")
 
-    parcels = list(parcels_collection.find(parcels_for_pudo_report_query))
-    print(f"Found parcels: {parcels}")
+    try:
+        # Query MongoDB
+        parcels = list(parcels_collection.find(parcels_for_pudo_report_query))
+        print(f"Found parcels: {parcels}")
+    except Exception as e:
+        print(f"Error querying MongoDB: {e}")
+        return jsonify({"error": "Error querying database"}), 500
 
-    # Filter parcels to exclude those not older than 7 days
-    filtered_parcels = [parcel for parcel in parcels if parcel["Status DT"] < seven_days_ago]
+    try:
+        # Filter parcels to exclude those not older than 7 days
+        filtered_parcels = [
+            parcel for parcel in parcels
+            if parcel.get("Status DT") and parcel["Status DT"].replace(tzinfo=timezone.utc) < seven_days_ago_naive
+        ]
+        print(f"Filtered parcels: {filtered_parcels}")
+    except KeyError as e:
+        print(f"KeyError during filtering: {e}")
+        return jsonify({"error": "Missing 'Status DT' in parcel data"}), 500
 
     # Process the parcels to count by site and distributor
     report = {}
