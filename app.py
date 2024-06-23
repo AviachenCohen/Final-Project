@@ -500,7 +500,7 @@ def get_parcels_for_pudo_report():
         # Parse the ISO string dates to datetime objects
         start_date = datetime.fromisoformat(start_date_str.replace('Z', '+00:00'))
         end_date = datetime.fromisoformat(end_date_str.replace('Z', '+00:00'))
-        seven_days_ago = datetime.now(pytz.utc) - timedelta(hours=168)
+        seven_days_ago = datetime.now(timezone.utc) - timedelta(hours=168)
     except ValueError:
         return jsonify({"error": "Invalid date format"}), 400
 
@@ -530,7 +530,7 @@ def get_parcels_for_pudo_report():
         # Filter parcels to exclude those not older than 7 days
         filtered_parcels = [
             parcel for parcel in parcels
-            if parcel['Status DT'] > seven_days_ago
+            if parcel['Status DT'].replace(tzinfo=timezone.utc) > seven_days_ago
         ]
         print(f"Filtered parcels: {filtered_parcels}")
     except KeyError as e:
