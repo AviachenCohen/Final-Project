@@ -89,7 +89,7 @@ def check_parcels_and_notify():
             for distributor in distributors:
                 distributor_email = distributor["Email"]
                 distributor_name = distributor["Name"]
-                subject = "Avia is coming to get you - Parcel Status Update Required"
+                subject = "Parcels status update is required"
                 body = f"Dear {distributor_name},\n\nYou are a very lazy distributor, update your packages already:\n"
 
                 for parcel in parcels:
@@ -97,7 +97,8 @@ def check_parcels_and_notify():
                         body += (f"- Parcel ID: {parcel['ID']}, Status: {parcel['Status']}, "
                                  f"Last Update: {parcel['Status DT']}\n")
 
-                body += "\nPlease update the status of these parcels as soon as possible.\n\nBest regards,\nAvia"
+                body += ("\nPlease update the status of these parcels as soon as possible.\n\nBest regards,"
+                         "\nOverdue Management System Team")
 
                 print(f"Sending email to {distributor_email}")
                 send_email(distributor_email, subject, body)
