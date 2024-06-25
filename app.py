@@ -49,7 +49,7 @@ def send_email(to_email, subject, body):
     try:
         smtp_server = "smtp.gmail.com"
         smtp_port = 587
-        sender_email = "aviacoheen@gmail.com"
+        sender_email = "overdue.system.management@gmail.com"
         app_password = os.getenv('EMAIL_PASSWORD')  # Ensure you have set this in your .env file
 
         msg = MIMEMultipart()
