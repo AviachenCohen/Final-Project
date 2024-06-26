@@ -97,7 +97,9 @@ def check_parcels_and_notify():
                         body += (f"- Parcel ID: {parcel['ID']}, Status: {parcel['Status']}, "
                                  f"Last Update: {parcel['Status DT']}\n")
 
-                body += ("\nPlease update the status of these parcels as soon as possible.\n\nBest regards,"
+                body += ("\nPlease update the status of these parcels as soon as possible, at the link:"
+                         "\nhttps://aviachen.wixsite.com/overdue-system-manag"
+                         ".\n\nBest regards,"
                          "\nOverdue Management System Team")
 
                 print(f"Sending email to {distributor_email}")
