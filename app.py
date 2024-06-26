@@ -90,7 +90,8 @@ def check_parcels_and_notify():
                 distributor_email = distributor["Email"]
                 distributor_name = distributor["Name"]
                 subject = "Parcels status update is required"
-                body = f"Dear {distributor_name},\n\nYou are a very lazy distributor, update your packages already:\n"
+                body = (f"Dear {distributor_name},"
+                        f"\n\nWe have identified parcels whose status has not been updated for over 48 hours:\n")
 
                 for parcel in parcels:
                     if parcel["Distributor"] == distributor["Name"]:
