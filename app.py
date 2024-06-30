@@ -289,15 +289,6 @@ def update_parcels_with_csv():
             old_exelot_code = parcel.get("Exelot Code", "")
             new_exelot_code = valid_status["Exelot Code"]
 
-            update_fields = {
-                "Status": new_status,
-                "Comments": new_comments,
-                "Exelot Code": new_exelot_code,
-                # "Status DT": new_status_dt   # delete this after updating the 3 files
-                "Status DT": datetime.now(pytz.utc)
-            }
-            parcels_collection.update_one({"ID": parcel_id}, {"$set": update_fields})
-
             audit_record = {
                 "Parcel ID": parcel_id,
                 "Old Status": parcel["Status"],
@@ -308,6 +299,16 @@ def update_parcels_with_csv():
                 "Change DT": datetime.now(pytz.utc)
             }
             audits_collection.insert_one(audit_record)
+
+            update_fields = {
+                "Status": new_status,
+                "Comments": new_comments,
+                "Exelot Code": new_exelot_code,
+                # "Status DT": new_status_dt   # delete this after updating the 3 files
+                "Status DT": datetime.now(pytz.utc)
+            }
+            parcels_collection.update_one({"ID": parcel_id}, {"$set": update_fields})
+
             updated_parcels += 1
 
             print(f"Updated parcel with ID: {parcel_id}")
