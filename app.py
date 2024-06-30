@@ -241,9 +241,12 @@ def update_parcels_with_csv():
         print('starting to process csv file')
         data = request.get_json()
         print(f'got the data from request: {data}')  # Print the entire data to check its structure
-        csv_content = data.get('csvContent', '')
-        if not csv_content:
+        csv_content_base64 = data.get('csvContent', '')
+        if not csv_content_base64:
             raise ValueError("No CSV file data found in the request")
+
+        # Decode the base64 encoded CSV content
+        csv_content = base64.b64decode(csv_content_base64).decode('utf-8')
         print(f'Decoded CSV content:\n{csv_content}')  # Print the decoded CSV content to ensure it's correct
 
         # Ensure csv_content is being read correctly by printing it before parsing
@@ -255,9 +258,13 @@ def update_parcels_with_csv():
         print('i have csv reader')
 
         updated_parcels = 0
+        row_count = 0  # Counter to track the number of rows
+
         for row in csv_reader:
-            print('about to start checking each row')
-            print('Row content:', row) # print each row to check field names and values
+            row_count += 1
+            print(f'Processing row {row_count}: {row}')  # Print each row to debug field names and values
+            # Ensure row is correctly parsed by printing its type and content
+            print(f'Row type: {type(row)}, Row content: {row}')
             parcel_id = row['ID']
             new_status = row['Status']
             new_comments = row['Comments']
