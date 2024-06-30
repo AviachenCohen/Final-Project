@@ -1,4 +1,4 @@
-import base64
+# import base64
 import os
 from io import StringIO
 import csv
@@ -127,13 +127,35 @@ def home():
     return "Hello, Flask is running!"
 
 
+# @app.route('/get_parcels', methods=['GET'])
+# def get_parcels():
+#     try:
+#         print("get_parcels endpoint called")
+#         parcels = list(parcels_collection.find({}))
+#         for parcel in parcels:
+#             parcel['_id'] = str(parcel['_id'])  # Convert ObjectId to string
+#         return jsonify(parcels)
+#     except Exception as e:
+#         print(f"Error occurred: {str(e)}")
+#         return jsonify({"error": str(e)}), 500
 @app.route('/get_parcels', methods=['GET'])
 def get_parcels():
     try:
         print("get_parcels endpoint called")
-        parcels = list(parcels_collection.find({}))
+
+        # Calculate the datetime for 48 hours ago
+        forty_eight_hours_ago = datetime.now(timezone.utc) - timedelta(hours=48)
+
+        # Query to filter parcels
+        query = {
+            "Status DT": {"$lt": forty_eight_hours_ago},
+            "Exelot Code": {"$nin": ["73", "52", "99"]}
+        }
+
+        parcels = list(parcels_collection.find(query))
         for parcel in parcels:
             parcel['_id'] = str(parcel['_id'])  # Convert ObjectId to string
+
         return jsonify(parcels)
     except Exception as e:
         print(f"Error occurred: {str(e)}")
