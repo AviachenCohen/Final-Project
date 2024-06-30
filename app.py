@@ -252,6 +252,7 @@ def update_parcels_with_csv():
         updated_parcels = 0
         for row in csv_reader:
             print('about to start checking each row')
+            print('Row content:', row) # print each row to check field names and values
             parcel_id = row['ID']
             new_status = row['Status']
             new_comments = row['Comments']
