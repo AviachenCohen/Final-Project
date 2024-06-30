@@ -256,7 +256,7 @@ def update_parcels_with_csv():
             new_status = row['Status']
             new_comments = row['Comments']
             # next row is your addition to be deleted later
-            new_status_dt = row['Status DT']
+            # new_status_dt = row['Status DT']
             print('the fields are:')
             print(parcel_id, new_status, new_comments)
 
@@ -280,8 +280,8 @@ def update_parcels_with_csv():
                 "Status": new_status,
                 "Comments": new_comments,
                 "Exelot Code": new_exelot_code,
-                "Status DT": new_status_dt   # delete this after updating the 3 files
-                # "Status DT": datetime.now(pytz.utc)
+                # "Status DT": new_status_dt   # delete this after updating the 3 files
+                "Status DT": datetime.now(pytz.utc)
             }
             parcels_collection.update_one({"ID": parcel_id}, {"$set": update_fields})
 
@@ -291,8 +291,8 @@ def update_parcels_with_csv():
                 "New Status": new_status,
                 "Old Exelot Code": old_exelot_code,
                 "New Exelot Code": new_exelot_code,
-                "Change DT": new_status_dt  # delete this after updating the 3 files
-                # "Change DT": datetime.now(pytz.utc)
+                # "Change DT": new_status_dt  # delete this after updating the 3 files
+                "Change DT": datetime.now(pytz.utc)
             }
             audits_collection.insert_one(audit_record)
             updated_parcels += 1
