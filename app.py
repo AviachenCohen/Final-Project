@@ -247,7 +247,7 @@ def update_parcels_with_csv():
         print(f'Decoded CSV content:\n{csv_content}')  # Print the decoded CSV content to ensure it's correct
 
         csv_reader = csv.DictReader(StringIO(csv_content))
-        print(F'i have csv reader:\n{csv_reader}')
+        print('i have csv reader')
 
         updated_parcels = 0
         for row in csv_reader:
