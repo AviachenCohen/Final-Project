@@ -558,7 +558,7 @@ def get_parcels_for_pudo_report():
         # Filter parcels to exclude those not older than 7 days
         filtered_parcels = [
             parcel for parcel in parcels
-            if parcel['Status DT'].replace(tzinfo=timezone.utc) > seven_days_ago
+            if parcel['Status DT'].replace(tzinfo=timezone.utc) < seven_days_ago
         ]
         print(f"Filtered parcels: {filtered_parcels}")
     except KeyError as e:
