@@ -127,18 +127,20 @@ def home():
     return "Hello, Flask is running!"
 
 
-# @app.route('/get_parcels', methods=['GET'])
-# def get_parcels():
-#     try:
-#         print("get_parcels endpoint called")
-#         parcels = list(parcels_collection.find({}))
-#         for parcel in parcels:
-#             parcel['_id'] = str(parcel['_id'])  # Convert ObjectId to string
-#         return jsonify(parcels)
-#     except Exception as e:
-#         print(f"Error occurred: {str(e)}")
-#         return jsonify({"error": str(e)}), 500
 @app.route('/get_parcels', methods=['GET'])
+def get_parcels():
+    try:
+        print("get_parcels endpoint called")
+        parcels = list(parcels_collection.find({}))
+        for parcel in parcels:
+            parcel['_id'] = str(parcel['_id'])  # Convert ObjectId to string
+        return jsonify(parcels)
+    except Exception as e:
+        print(f"Error occurred: {str(e)}")
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/get_parcels_for_parcels_management', methods=['GET'])
 def get_parcels():
     try:
         print("get_parcels endpoint called")
