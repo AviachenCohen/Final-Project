@@ -141,7 +141,7 @@ def get_parcels():
 
 
 @app.route('/get_parcels_for_parcels_management', methods=['GET'])
-def get_parcels():
+def get_parcels_for_parcels_management():
     try:
         print("get_parcels endpoint called")
 
