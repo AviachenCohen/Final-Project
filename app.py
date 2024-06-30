@@ -246,6 +246,11 @@ def update_parcels_with_csv():
             raise ValueError("No CSV file data found in the request")
         print(f'Decoded CSV content:\n{csv_content}')  # Print the decoded CSV content to ensure it's correct
 
+        # Ensure csv_content is being read correctly by printing it before parsing
+        print(f"CSV Content Length: {len(csv_content)}")
+        if len(csv_content) < 50:
+            print(f"CSV Content (first 50 chars): {csv_content[:50]}")
+
         csv_reader = csv.DictReader(StringIO(csv_content))
         print('i have csv reader')
 
