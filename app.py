@@ -273,68 +273,83 @@ def update_parcels_with_csv():
         updated_parcels = 0
         row_count = 0  # Counter to track the number of rows
 
+        chunk_size = 100  # Number of records to process in each chunk
+        chunk = []
+
         for row in csv_reader:
             row_count += 1
             print(f'Processing row {row_count}: {row}')  # Print each row to debug field names and values
             # Ensure row is correctly parsed by printing its type and content
             print(f'Row type: {type(row)}, Row content: {row}')
-            parcel_id = row['ID']
-            new_status = row['Status']
-            new_comments = row['Comments']
-            # next row is your addition to be deleted later
-            new_status_dt_str = row['Status DT']
-            print('the fields are:')
-            print(parcel_id, new_status, new_comments, new_status_dt_str)
+            chunk.append(row)
 
-            # Convert "Status DT" to datetime object
-            new_status_dt = datetime.strptime(new_status_dt_str, '%d/%m/%Y')
-            print(f"Converted Status DT: {new_status_dt}")
+            if len(chunk) >= chunk_size:
+                process_chunk(chunk)
+                chunk = []
 
-            print(f"Processing parcel with ID: {parcel_id}")
-
-            parcel = parcels_collection.find_one({"ID": parcel_id})
-            if not parcel:
-                print(f"Parcel with ID {parcel_id} not found.")
-                continue
-
-            distributor = parcel["Distributor"]
-            valid_status = statuses_collection.find_one({"Distributor": distributor, "Status": new_status})
-            if not valid_status:
-                print(f"Invalid status {new_status} for distributor {distributor}.")
-                continue
-
-            old_exelot_code = parcel.get("Exelot Code", "")
-            new_exelot_code = valid_status["Exelot Code"]
-
-            audit_record = {
-                "Parcel ID": parcel_id,
-                "Old Status": parcel["Status"],
-                "New Status": new_status,
-                "Old Exelot Code": old_exelot_code,
-                "New Exelot Code": new_exelot_code,
-                "Change DT": new_status_dt  # delete this after updating the 3 files
-                # "Change DT": datetime.now(pytz.utc)
-            }
-            audits_collection.insert_one(audit_record)
-
-            update_fields = {
-                "Status": new_status,
-                "Comments": new_comments,
-                "Exelot Code": new_exelot_code,
-                "Status DT": new_status_dt   # delete this after updating the 3 files
-                # "Status DT": datetime.now(pytz.utc)
-            }
-            parcels_collection.update_one({"ID": parcel_id}, {"$set": update_fields})
-
-            updated_parcels += 1
-
-            print(f"Updated parcel with ID: {parcel_id}")
+        # Process remaining rows
+        if chunk:
+            process_chunk(chunk)
 
         print(f"Updated {updated_parcels} parcels.")
         return jsonify({"message": "Parcels updated successfully", "updated_parcels": updated_parcels}), 200
     except Exception as e:
         print(f"Error processing CSV: {str(e)}")
         return jsonify({"error": str(e)}), 400
+
+
+def process_chunk(chunk):
+    global updated_parcels
+    for row in chunk:
+        parcel_id = row['ID']
+        new_status = row['Status']
+        new_comments = row['Comments']
+        new_status_dt_str = row['Status DT']
+        print('the fields are:')
+        print(parcel_id, new_status, new_comments, new_status_dt_str)
+
+        # Convert "Status DT" to datetime object
+        new_status_dt = datetime.strptime(new_status_dt_str, '%d/%m/%Y')
+        print(f"Converted Status DT: {new_status_dt}")
+
+        print(f"Processing parcel with ID: {parcel_id}")
+
+        parcel = parcels_collection.find_one({"ID": parcel_id})
+        if not parcel:
+            print(f"Parcel with ID {parcel_id} not found.")
+            continue
+
+        distributor = parcel["Distributor"]
+        valid_status = statuses_collection.find_one({"Distributor": distributor, "Status": new_status})
+        if not valid_status:
+            print(f"Invalid status {new_status} for distributor {distributor}.")
+            continue
+
+        old_exelot_code = parcel.get("Exelot Code", "")
+        new_exelot_code = valid_status["Exelot Code"]
+
+        audit_record = {
+            "Parcel ID": parcel_id,
+            "Old Status": parcel["Status"],
+            "New Status": new_status,
+            "Old Exelot Code": old_exelot_code,
+            "New Exelot Code": new_exelot_code,
+            "Change DT": new_status_dt  # Use the parsed datetime object
+        }
+        audits_collection.insert_one(audit_record)
+
+        update_fields = {
+            "Status": new_status,
+            "Comments": new_comments,
+            "Exelot Code": new_exelot_code,
+            "Status DT": new_status_dt   # Use the parsed datetime object
+        }
+        parcels_collection.update_one({"ID": parcel_id}, {"$set": update_fields})
+
+        updated_parcels += 1
+
+        print(f"Updated parcel with ID: {parcel_id}")
+
 
 
 @app.route('/get_statuses', methods=['GET'])
