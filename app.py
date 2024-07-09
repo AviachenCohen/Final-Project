@@ -140,7 +140,7 @@ job_exists = any(job.name == 'check_parcels_and_notify' for job in scheduler.get
 if not job_exists:
     scheduler.add_job(
         check_parcels_and_notify,
-        trigger=CronTrigger(day_of_week='sun,mon,tue,wed,thu', hour=15, minute=11, timezone='Asia/Jerusalem'),
+        trigger=CronTrigger(day_of_week='sun,mon,tue,wed,thu', hour=15, minute=14, timezone='Asia/Jerusalem'),
         name='check_parcels_and_notify'
     )
 
