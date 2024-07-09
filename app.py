@@ -128,7 +128,7 @@ def check_parcels_and_notify():
 scheduler = BackgroundScheduler()
 scheduler.start()
 
-# Schedule the check_parcels_and_notify function to run daily at 8 AM Israel time
+# Schedule the check_parcels_and_notify function to run daily at 9 AM Israel time
 scheduler.add_job(
     check_parcels_and_notify,
     trigger=CronTrigger(day_of_week='sun,mon,tue,wed,thu', hour=10, minute=0, timezone='Asia/Jerusalem')
@@ -282,9 +282,13 @@ def update_parcels_with_csv():
             new_status = row['Status']
             new_comments = row['Comments']
             # next row is your addition to be deleted later
-            new_status_dt = row['Status DT']
+            new_status_dt_str = row['Status DT']
             print('the fields are:')
-            print(parcel_id, new_status, new_comments)
+            print(parcel_id, new_status, new_comments, new_status_dt_str)
+
+            # Convert "Status DT" to datetime object
+            new_status_dt = datetime.strptime(new_status_dt_str, '%d/%m/%Y')
+            print(f"Converted Status DT: {new_status_dt}")
 
             print(f"Processing parcel with ID: {parcel_id}")
 
