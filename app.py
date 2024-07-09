@@ -621,8 +621,9 @@ def get_parcels_for_pudo_report():
 
 # Scheduler setup for worker process
 if os.getenv('DYNO') == 'worker':
+    logging.info("Worker process detected. Setting up scheduler.")
     scheduler = BackgroundScheduler()
-    trigger = CronTrigger(day_of_week='sun,mon,tue,wed,thu', hour=16, minute=9, timezone='Asia/Jerusalem')
+    trigger = CronTrigger(day_of_week='sun,mon,tue,wed,thu', hour=16, minute=20, timezone='Asia/Jerusalem')
     scheduler.add_job(check_parcels_and_notify, trigger, name='check_parcels_and_notify')
     scheduler.start()
     logging.info("Scheduler started with job check_parcels_and_notify.")
