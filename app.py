@@ -90,15 +90,28 @@ def check_parcels_and_notify():
                 distributor_email = distributor["Email"]
                 distributor_name = distributor["Name"]
                 subject = "Parcels status update is required"
-                body = (f"Dear {distributor_name},"
-                        f"\n\nWe have identified parcels whose status has not been updated for over 48 hours:\n")
+                body = (f"Hello {distributor_name},"
+                        f"\n\nWe have identified parcels whose status has not been updated for over 48 hours.\n")
 
+                # Add summary of the number of parcels
+                total_parcels = sum(1 for parcel in parcels if parcel["Distributor"] == distributor["Name"])
+                body += f"Total parcels requiring update: {total_parcels}\n"
+
+                # Include the first few parcels in the email body
+                max_parcels_to_show = 5
+                shown_parcels = 0
                 for parcel in parcels:
                     if parcel["Distributor"] == distributor["Name"]:
                         body += (f"- Parcel ID: {parcel['ID']}, Status: {parcel['Status']}, "
                                  f"Last Update: {parcel['Status DT']}\n")
+                        shown_parcels += 1
+                        if shown_parcels >= max_parcels_to_show:
+                            break
 
-                body += ("\nPlease update the status of these parcels as soon as possible, at the link:"
+                if total_parcels > max_parcels_to_show:
+                    body += f"\n...and {total_parcels - max_parcels_to_show} more parcels."
+
+                body += ("\n\nPlease update the status of these parcels as soon as possible, at the link:"
                          "\nhttps://aviachen.wixsite.com/overdue-system-manag"
                          ".\n\nBest regards,"
                          "\nOverdue Management System Team")
@@ -118,7 +131,7 @@ scheduler.start()
 # Schedule the check_parcels_and_notify function to run daily at 8 AM Israel time
 scheduler.add_job(
     check_parcels_and_notify,
-    trigger=CronTrigger(day_of_week='sun,mon,tue,wed,thu', hour=9, minute=0, timezone='Asia/Jerusalem')
+    trigger=CronTrigger(day_of_week='sun,mon,tue,wed,thu', hour=10, minute=0, timezone='Asia/Jerusalem')
 )
 
 
