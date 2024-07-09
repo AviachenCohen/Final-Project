@@ -134,17 +134,6 @@ def check_parcels_and_notify():
         logging.error(f"Error in check_parcels_and_notify: {e}")
 
 
-# Set up the scheduler
-scheduler = BackgroundScheduler()
-scheduler.add_job(
-    check_parcels_and_notify,
-    trigger=CronTrigger(day_of_week='sun,mon,tue,wed,thu', hour=15, minute=59, timezone='Asia/Jerusalem'),
-    name='check_parcels_and_notify'
-)
-scheduler.start()
-logging.info("Scheduler started with job check_parcels_and_notify.")
-
-
 @app.route('/')
 def home():
     return "Hello, Flask is running!"
@@ -632,6 +621,17 @@ def get_parcels_for_pudo_report():
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0')
+
+# Scheduler setup for worker process
+if os.getenv('DYNO') == 'worker':
+    scheduler = BackgroundScheduler()
+    scheduler.add_job(
+        check_parcels_and_notify,
+        trigger=CronTrigger(day_of_week='sun,mon,tue,wed,thu', hour=16, minute=4, timezone='Asia/Jerusalem'),
+        name='check_parcels_and_notify'
+    )
+    scheduler.start()
+    logging.info("Scheduler started with job check_parcels_and_notify.")
 
 # @app.route('/get_parcels', methods=['GET'])
 # @jwt_required()
