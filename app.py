@@ -134,23 +134,25 @@ def check_parcels_and_notify():
         logging.error(f"Error in check_parcels_and_notify: {e}")
 
 
-# Set up the scheduler
-scheduler = BackgroundScheduler()
+# Only start the scheduler if this is the main process (i.e., the web server)
+if os.getenv('FLASK_ENV') == 'development' or 'DYNO' not in os.environ:
+    # Set up the scheduler
+    scheduler = BackgroundScheduler()
 
-# Check if the job already exists
-job_exists = any(job.name == 'check_parcels_and_notify' for job in scheduler.get_jobs())
-if not job_exists:
-    scheduler.add_job(
-        check_parcels_and_notify,
-        trigger=CronTrigger(day_of_week='sun,mon,tue,wed,thu', hour=15, minute=42, timezone='Asia/Jerusalem'),
-        name='check_parcels_and_notify'
-    )
-    logging.info("Job check_parcels_and_notify added to scheduler.")
-else:
-    logging.info("Job check_parcels_and_notify already exists in scheduler.")
+    # Check if the job already exists
+    job_exists = any(job.name == 'check_parcels_and_notify' for job in scheduler.get_jobs())
+    if not job_exists:
+        scheduler.add_job(
+            check_parcels_and_notify,
+            trigger=CronTrigger(day_of_week='sun,mon,tue,wed,thu', hour=15, minute=47, timezone='Asia/Jerusalem'),
+            name='check_parcels_and_notify'
+        )
+        logging.info("Job check_parcels_and_notify added to scheduler.")
+    else:
+        logging.info("Job check_parcels_and_notify already exists in scheduler.")
 
-scheduler.start()
-logging.info("Scheduler started.")
+    scheduler.start()
+    logging.info("Scheduler started.")
 
 
 @app.route('/')
