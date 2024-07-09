@@ -15,6 +15,10 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
 from flask_cors import CORS
 from celery_config import make_celery
+import logging
+
+# Setup logging
+logging.basicConfig(level=logging.INFO)
 
 
 # from flask_jwt_extended import JWTManager, jwt_required, get_jwt_identity, create_access_token
@@ -79,20 +83,24 @@ def send_email(to_email, subject, body):
 
 def check_parcels_and_notify():
     try:
+        logging.info("Executing check_parcels_and_notify")
         forty_eight_hours_ago = datetime.now(pytz.utc) - timedelta(hours=48)
         query = {"Status DT": {"$lt": forty_eight_hours_ago}}
         parcels = list(parcels_collection.find(query))
-        print(f"Found {len(parcels)} parcels that need updates.")
+        # print(f"Found {len(parcels)} parcels that need updates.")
+        logging.info(f"Found {len(parcels)} parcels that need updates.")
 
         if parcels:
             # Use distributor names for querying
             distributor_names = {parcel["Distributor"] for parcel in parcels}
-            print(f"Distributor Names: {distributor_names}")
+            # print(f"Distributor Names: {distributor_names}")
+            logging.info(f"Distributor Names: {distributor_names}")
 
             # Querying with string name
             distributors_cursor = distributors_collection.find({"Name": {"$in": list(distributor_names)}})
             distributors = list(distributors_cursor)
-            print(f"Found {len(distributors)} distributors.")
+            # print(f"Found {len(distributors)} distributors.")
+            logging.info(f"Found {len(distributors)} distributors.")
 
             for distributor in distributors:
                 distributor_email = distributor["Email"]
@@ -124,12 +132,15 @@ def check_parcels_and_notify():
                          ".\n\nBest regards,"
                          "\nOverdue Management System Team")
 
-                print(f"Sending email to {distributor_email}")
+                # print(f"Sending email to {distributor_email}")
+                logging.info(f"Sending email to {distributor_email}")
                 send_email(distributor_email, subject, body)
         else:
-            print("No parcels found that need updates.")
+            # print("No parcels found that need updates.")
+            logging.info("No parcels found that need updates.")
     except Exception as e:
-        print(f"Error in check_parcels_and_notify: {e}")
+        # print(f"Error in check_parcels_and_notify: {e}")
+        logging.error(f"Error in check_parcels_and_notify: {e}")
 
 
 # Set up the scheduler
@@ -140,11 +151,15 @@ job_exists = any(job.name == 'check_parcels_and_notify' for job in scheduler.get
 if not job_exists:
     scheduler.add_job(
         check_parcels_and_notify,
-        trigger=CronTrigger(day_of_week='sun,mon,tue,wed,thu', hour=15, minute=14, timezone='Asia/Jerusalem'),
+        trigger=CronTrigger(day_of_week='sun,mon,tue,wed,thu', hour=15, minute=20, timezone='Asia/Jerusalem'),
         name='check_parcels_and_notify'
     )
+    logging.info("Job check_parcels_and_notify added to scheduler.")
+else:
+    logging.info("Job check_parcels_and_notify already exists in scheduler.")
 
 scheduler.start()
+logging.info("Scheduler started.")
 
 
 @app.route('/')
