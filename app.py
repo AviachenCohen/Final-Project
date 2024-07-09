@@ -284,12 +284,12 @@ def update_parcels_with_csv():
             chunk.append(row)
 
             if len(chunk) >= chunk_size:
-                process_chunk(chunk)
+                updated_parcels += process_chunk(chunk)
                 chunk = []
 
         # Process remaining rows
         if chunk:
-            process_chunk(chunk)
+            updated_parcels += process_chunk(chunk)
 
         print(f"Updated {updated_parcels} parcels.")
         return jsonify({"message": "Parcels updated successfully", "updated_parcels": updated_parcels}), 200
@@ -299,7 +299,7 @@ def update_parcels_with_csv():
 
 
 def process_chunk(chunk):
-    global updated_parcels
+    updated_parcels = 0
     for row in chunk:
         parcel_id = row['ID']
         new_status = row['Status']
@@ -350,6 +350,7 @@ def process_chunk(chunk):
 
         print(f"Updated parcel with ID: {parcel_id}")
 
+    return updated_parcels
 
 
 @app.route('/get_statuses', methods=['GET'])
