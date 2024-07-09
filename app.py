@@ -134,13 +134,17 @@ def check_parcels_and_notify():
 
 # Set up the scheduler
 scheduler = BackgroundScheduler()
-scheduler.start()
 
-# Schedule the check_parcels_and_notify function to run daily at 9 AM Israel time
-scheduler.add_job(
-    check_parcels_and_notify,
-    trigger=CronTrigger(day_of_week='sun,mon,tue,wed,thu', hour=15, minute=5, timezone='Asia/Jerusalem')
-)
+# Check if the job already exists
+job_exists = any(job.name == 'check_parcels_and_notify' for job in scheduler.get_jobs())
+if not job_exists:
+    scheduler.add_job(
+        check_parcels_and_notify,
+        trigger=CronTrigger(day_of_week='sun,mon,tue,wed,thu', hour=15, minute=11, timezone='Asia/Jerusalem'),
+        name='check_parcels_and_notify'
+    )
+
+scheduler.start()
 
 
 @app.route('/')
