@@ -139,7 +139,7 @@ scheduler.start()
 # Schedule the check_parcels_and_notify function to run daily at 9 AM Israel time
 scheduler.add_job(
     check_parcels_and_notify,
-    trigger=CronTrigger(day_of_week='sun,mon,tue,wed,thu', hour=10, minute=0, timezone='Asia/Jerusalem')
+    trigger=CronTrigger(day_of_week='sun,mon,tue,wed,thu', hour=15, minute=0, timezone='Asia/Jerusalem')
 )
 
 
