@@ -14,5 +14,7 @@ def make_celery(app):
             with app.app_context():
                 return super().__call__(*args, **kwargs)
 
+    # Register the custom task class with celery
     celery.Task = ContextTask
+
     return celery

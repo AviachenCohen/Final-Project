@@ -14,6 +14,8 @@ from email.mime.multipart import MIMEMultipart
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
 from flask_cors import CORS
+from celery_config import make_celery
+
 
 # from flask_jwt_extended import JWTManager, jwt_required, get_jwt_identity, create_access_token
 
@@ -21,6 +23,12 @@ load_dotenv()  # Load environment variables from .env file
 
 app = Flask(__name__)
 CORS(app)
+
+# Load config from config.py
+app.config.from_object('config.Config')
+
+# Set up Celery
+celery = make_celery(app)
 
 # Set up MongoDB connection
 mongo_uri = os.getenv('MONGO_URI')
@@ -270,37 +278,19 @@ def update_parcels_with_csv():
         csv_reader = csv.DictReader(StringIO(csv_content))
         print('i have csv reader')
 
-        updated_parcels = 0
-        row_count = 0  # Counter to track the number of rows
+        # Process the CSV rows asynchronously
+        update_parcels_task.delay(list(csv_reader))
 
-        chunk_size = 100  # Number of records to process in each chunk
-        chunk = []
-
-        for row in csv_reader:
-            row_count += 1
-            print(f'Processing row {row_count}: {row}')  # Print each row to debug field names and values
-            # Ensure row is correctly parsed by printing its type and content
-            print(f'Row type: {type(row)}, Row content: {row}')
-            chunk.append(row)
-
-            if len(chunk) >= chunk_size:
-                updated_parcels += process_chunk(chunk)
-                chunk = []
-
-        # Process remaining rows
-        if chunk:
-            updated_parcels += process_chunk(chunk)
-
-        print(f"Updated {updated_parcels} parcels.")
-        return jsonify({"message": "Parcels updated successfully", "updated_parcels": updated_parcels}), 200
+        return jsonify({"message": "CSV processing started"}), 200
     except Exception as e:
         print(f"Error processing CSV: {str(e)}")
         return jsonify({"error": str(e)}), 400
 
 
-def process_chunk(chunk):
+@celery.task
+def update_parcels_task(rows):
     updated_parcels = 0
-    for row in chunk:
+    for row in rows:
         parcel_id = row['ID']
         new_status = row['Status']
         new_comments = row['Comments']
@@ -350,7 +340,7 @@ def process_chunk(chunk):
 
         print(f"Updated parcel with ID: {parcel_id}")
 
-    return updated_parcels
+    print(f"Updated {updated_parcels} parcels")
 
 
 @app.route('/get_statuses', methods=['GET'])
