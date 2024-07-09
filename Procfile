@@ -1,3 +1,4 @@
-web: gunicorn app:app
-worker: celery -A app.celery worker --loglevel=info
+web: WORKER=false gunicorn app:app
+worker: WORKER=true celery -A app.celery worker --loglevel=info
+
 
