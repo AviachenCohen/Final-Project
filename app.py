@@ -16,8 +16,6 @@ from apscheduler.triggers.cron import CronTrigger
 from flask_cors import CORS
 from celery_config import make_celery
 import logging
-
-
 # from flask_jwt_extended import JWTManager, jwt_required, get_jwt_identity, create_access_token
 
 load_dotenv()  # Load environment variables from .env file
@@ -46,12 +44,6 @@ distributors_collection = db['Distributors']
 # app.config['JWT_SECRET_KEY'] = os.getenv('FLASK_SECRET_KEY')
 # jwt = JWTManager(app)
 
-# # Email configuration
-# EMAIL_ADDRESS = 'aviacoheen@gmail.com'
-# EMAIL_PASSWORD = os.getenv('EMAIL_PASSWORD')
-# SMTP_SERVER = "smtp.gmail.com"
-# SMTP_PORT = 587
-
 
 # Setup logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -62,8 +54,8 @@ def send_email(to_email, subject, body):
     try:
         smtp_server = "smtp.gmail.com"
         smtp_port = 587
-        sender_email = "overdue.system.management@gmail.com"
-        app_password = os.getenv('EMAIL_PASSWORD')  # Ensure you have set this in your .env file
+        sender_email = os.getenv('SENDING_EMAIL')
+        app_password = os.getenv('EMAIL_PASSWORD')
 
         msg = MIMEMultipart()
         msg['From'] = sender_email
