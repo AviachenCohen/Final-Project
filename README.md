@@ -54,7 +54,7 @@ Real-time data analysis revealed over 20,000 package records scanned with sub-30
 
 ## 👥 Role-Based Views
 - **Distributor Interface**: Handles bulk status updates.
-- **sample of the organization internal view**: Enables management and tracking of all parcels built-in statuses.
+- **Sample of the organization internal view**: Enables management and tracking of all parcels built-in statuses.
 
 | Distributor View                     | Status Mapping Logic              |
 |-------------------------------------|-----------------------------------|
