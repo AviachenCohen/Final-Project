@@ -48,7 +48,7 @@ Each package record includes full traceability: status logs, update timestamps, 
 ## 📊 Performance Snapshot
 ![Command Execution Rate](media/System-command-execution-rate-june-july.jpg)
 
-Real-time data analysis revealed over 20,000 package records scanned with sub-300ms response times per query.
+A significant increase in operations per second (ops/s) is observed beginning July 6th, which aligns with the batch insertion of approximately 20,000 package records. This pattern confirms that the database handled the ingestion as expected, with stable operation throughput across all shards.
 
 ---
 
